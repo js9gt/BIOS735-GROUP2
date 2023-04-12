@@ -16,8 +16,8 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ```{r include=FALSE}
 # Packages
-
 library(RefManageR)
+
 ```
 
 # Introduction
@@ -49,7 +49,7 @@ Kaggle has available a 16S rRNA sequence of gut microbiota with 1322 rows and 25
 Additionally, there is a second dataset which contains data from the metagenomic analysis performed for 30 ASD patients and 30 TD patients. The data is presented similarly with patient IDs for 30 ASD and 30 TD children across the top. There are 5619 rows which identify different bacteria present, this time as individual rows rather than in groups like before. Similar to the previous dataset, down the columns as observations, we see measures of abundance in patients. For our project purposes, we will not be using the second dataset, although it could yield interesting results as an extensionn of this project.
 
 
-Prior to analysis, the data will need to be preprocessed by transforming the abundance data into proportional data, as well as removing species/groups with a high proportion of 0. Additionally, the data may require transformation such as a log transformation.
+Typically, the data will need to be preprocessed by transforming the abundance data into proportional data, as well as removing species/groups with a high proportion of 0. Additionally, the data may require transformation such as a log transformation. 
 
 ## Project Aims
 
@@ -62,7 +62,140 @@ There exist several obstacles that require attention while analyzing microbiome 
 * Microbiome data is over-dispersed, therefore for modeling, the Negative Binomial distribution should be used instead of the Poisson distribution to model the count data
 * Microbiome data is zero-inflated. In order to account for this problem, we will use a zero-inflated model for this feature [@xia2018modeling].
 
+# Data Preprocessing
+
+As mentioned, typical methods of preprocessing for microbiome data includes removing species (OTUs in this case) with high counts of 0 as well as transforming into proportional data from abundance data.
+
+However, the model we are implementing makes use of the abundance counts through zero inflated negative binomial (ZINB) regression, so there will be no need for preprocessing in this case.
+
 # Methods
+
+We observe counts in our dataset which would typically be modeled through poisson regression. However, due to the large number of zeros, we use zero-inflated negative binomial regression instead. This dataset is high dimensional, as the number of OTUs (taxa consisting of "similar" species) exceeds the number of subjects from which data was collected from. 
+
+The first step in the process is to identify the OTUs with significantly differential abundance to include in the logistic regression model in step 2. The idea is, that since we have so many different variable species, we essentially want to perform variable selection to identify the most significant OTUs to include in our model. 
+
+## Step 1: Find differential abundance species using the zero inflated negative binomial (ZINB) model
+
+\textcolor{red}{below copied from the proposal. We need to include: clear description of module 2 likelihood based methods used with likelihood, estimation procedure/hypothesis testing approach, motivation for use and justification, assumptions}
+
+PDF of Negative Binomial distribution with mean parameter $\mu_{i,g}$ and dispersion parameter $\theta_g$:
+
+\begin{equation}
+f\left(Y_{i , g} =y_{i,g}\mid u_ {i, g}, \theta_ g\right)=\frac{\Gamma\left(y_{i,g}+\theta_g^{-1}\right)}{y_{i,g} !\Gamma\left(\theta_g^{-1}\right)}\left(\frac{\theta_ g \mu _{i , g}}{1+\theta_ g \mu _{i , g}}\right)^{y_{i,g}}\left(\frac{1}{1+\theta_ g \mu _{i , g}}\right)^{\theta_g^{-1}}
+\end{equation}
+
+Suppose $Y_{i, g} \sim Z I N B\left(\mu_{i, g}, \theta_g, \pi_{i, g}\right)$, 
+
+\begin{equation}
+\resizebox{.92\hsize}{!}{$f\left(Y_{i , g} =y_{i,g}\mid u_ {i, g}, \theta_ g, \pi_{i,g}\right)=
+\left[\pi_{i,g}+(1-\pi_{i,g}) \left(\frac{1}{1+\theta_ g \mu _{i , g}}\right)^{\theta_g^{-1}} \right]^{I[y_{i,g}=0]} 
+\left[(1-\pi_{i,g})\frac{\Gamma\left(y_{i,g}+\theta_g^{-1}\right)}{y_{i,g} !\Gamma\left(\theta_g^{-1}\right)}\left(\frac{\theta_ g \mu _{i , g}}{1+\theta_ g \mu _{i , g}}\right)^{y_{i,g}}\left(\frac{1}{1+\theta_ g \mu _{i , g}}\right)^{\theta_g^{-1}}\right]^{I(y_{i,g}>0)}$} \label{Eq_1}
+\end{equation}
+
+Suppose $Z_{i,g}$ indicates whether or not $Y_{i,g}$ belongs to the zero-inflated part. We can also use the complete data likelihood (CDL) to rewrite \ref{Eq_1}.
+
+\begin{equation}
+\resizebox{.92\hsize}{!}{$f\left(Y_{i , g} =y_{i,g},Z_{i,g}= z_{i,g}\mid  u_ {i, g}, \theta_ g, \pi_{i,g}\right)=
+\left\{\pi_{i,g}^{z_{i,g}}\left[(1-\pi_{i,g}) \left(\frac{1}{1+\theta_ g \mu _{i , g}}\right)^{\theta_g^{-1}}\right] ^{1-z_{i,g}} \right\}^{I[y_{i,g}=0]} 
+\left[(1-\pi_{i,g})\frac{\Gamma\left(y_{i,g}+\theta_g^{-1}\right)}{y_{i,g} !\Gamma\left(\theta_g^{-1}\right)}\left(\frac{\theta_ g \mu _{i , g}}{1+\theta_ g \mu _{i , g}}\right)^{y_{i,g}}\left(\frac{1}{1+\theta_ g \mu _{i , g}}\right)^{\theta_g^{-1}}\right]^{I(y_{i,g}>0)\cdot (1-z_{i,g})}$}
+\end{equation}
+
+For the $g$th species, the CDL can be written as 
+
+\begin{equation}
+\prod_{i=1}^{n}f\left(Y_{i , g} =y_{i,g},Z_{i,g}= z_{i,g}\mid  u_ {i, g}, \theta_ g, \pi_{i,g}\right)
+\end{equation}
+
+Therefore, we can use the EM algorithm to find the MLE for the $g$th OTU.
+
+In order to test the differential abundance status, we need to model $\log(\mu_{i,g})=X_i^{\top} \beta_g$, where $\beta_g=(\beta^{(Intercept)}_g, \beta^{D}_g)^{\top}$, $\text{logit} (\pi_{i,g})=X_i^{\top} \gamma_g$, where $\gamma_g=(\gamma^{(Intercept)}_g, \gamma^{D}_g)^{\top}$.
+
+We just need to test if $H_0:\beta^{D}_g=\gamma^{D}_g=0$ holds. And we will use LRT to test this hypothesis.
+
+\begin{equation}
+    \text{LRT}=\prod_{i=1}^n \frac{f\left(Y_{i , g} =y_{i,g}\mid u_ {i, g}^{(0)}, \theta_ g^{(0)}, \pi_{i,g}^{(0)}\right)}{f\left(Y_{i , g} =y_{i,g}\mid u_ {i, g}^{(1)}, \theta_ g^{(1)}, \pi_{i,g}^{(1)}\right)}
+\end{equation}
+
+Under $H_0$, $-2\log(\text{LRT})\rightarrow \chi^2(2)$. We can test the species one by one and find the significantly differential abundance OTUs as the input data for the next step.
+
+## Step 2: Using logistic regression to predict ASD status using the differential abundance species
+
+Using the identified OTUs from step 1, we will fit a logistic regression to predict ASD status, a binary outcome.
+
+\textcolor{red}{what do we mean by both compositional and count data? Need to flesh out this section}
+
+## Step 3: Compare to Random Forest
+
+Finally, we will compare the performance of our model with a Random Forest model from the "caret" package in R. Random forest classification will be implemented to assess the ability of the gut microbiome data to predict ASD status. The implementation of random forest classification improves the disadvantages of just having one classification tree. Any one classification tree tends to not "have the same level of predictive accuracy as some of the other regression and classification approaches" and are susceptible to large changes because of small changes in data [@james2017learning]. Additionally, random forests run efficiently on large datasets and have high performance on classification algorithms. Rather than performing this random forest with the step 1 selected differential abundant OTU species, we will use the entire dataset, as the algorithm will decide for itself which of the OTUs is important as a feature for predicting ASD status.
+
+Tuning parameters that can be adjusted include the number of trees generated, the subset of the number of predictors considered at each split, and the measure used to assess the quality of the split, among others.
+
+The data will be split into 10 folds. The logistic regression will be trained on 9 folds, with 1 fold held back as the testing data. This process will be repeated until we have 10 different performance scores and the model has been trained 10 times. We will perform the same process to assess the performance of the random forest algorithm. A 10-fold cross validation procedure where participants a part of the study are randomly allocated to 1 of 10 independent folds of approximately equal size. The training and testing are iterated over such that each individual fold was treated as a testing data set on its own once, while the remaining 9 folds are treated as the training data set. Measurements used to assess the random forest algorithm include accuracy, sensitivity, and specificity.
+
+* Accuracy will be calculated by summing the number of correctly predicted individuals with ASD divided by the total number of individuals.
+
+* Sensitivity will be calculated by taking the total number of correctly predicted individuals with ASD and dividing by the total number of individuals with ASD.
+
+* Specificity will be calculated by taking the total number of correctly predicted individuals without ASD and dividing by total number of individuals without ASD.
+
+In order to tune the parameters, a grid search will be conducted during the 10-fold cross validation procedure in the random forest.
+
+Finally, to compare logistic regression and random forest classification performance, ROC AUCs will be computed and compared for the two, as well as the aforementioned sensitivity and specificity calculations for both models.
+
+## Package
+
+\textcolor{red}{include brief package description with the relevant functions}
+
+\textcolor{red}{Also add description of the random forest "caret" package briefly}
+
+# Results
+
+\textcolor{red}{First: fit our model with ZINB and Poisson regression}
+```{r}
+## Loading Package
+library(ZINB)
+
+## read in data
+microbiome <- read.csv("~/Desktop/BIOS761-GROUP2/Data/microbiome.csv")
+
+# eventually wrap in 10 fold CV
+
+## fitting ZINB model
+# n: number of species
+# p: the actual subjects
+# y: n-dimensional response vector
+# X: nxp 
+
+## LRT for multiple responses to find important predictors
+
+## fit logistic regression with those identified predictors
+
+
+## calculate accuracy, specificity, sensitivity metrics
+
+## calculate ROC and AUC
+```
+
+\textcolor{red}{Second: fit random forest}
+```{r}
+## Loading Package
+library(caret)
+
+# wrap in 10 fold CV
+
+# random forest with entire dataset using "caret" package
+
+# grid search for tuning parameters: # trees, # predictors considered at each split
+
+## calculate accuracy, specificity, sensitivity metrics
+
+## calculate ROC and AUC
+```
+
+
+# Discussion
+
+\textcolor{red}{Add written comparison}
 
 
 # References (Must be the last section to have bibliography printed after)
