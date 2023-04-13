@@ -1,4 +1,4 @@
-# BIOS761-GROUP2
+# BIOS735-GROUP2
 
 The following contains an R package titled "ZINB" which will be applied to a dataset on Kaggle containing information on a child's microbiome and whether or not a child has Autism Spectrum Disorder (ASD). The ultimate goal of the package is to build a model using microbiome differential abundance in species to predict whether or not someone has ASD.
 
