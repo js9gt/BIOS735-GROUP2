@@ -1,13 +1,15 @@
 Package: ZINB
 Type: Package
 Title: Zero-Inflated Negative Binomial Regression
-Version: 0.1.0
+Version: 0.2.0
 Author: c(person("Yifan", "Dai", email="yfd@unc.edu"))
 Description: Estimation and inference for zero-inflated negative binomial regression.
 License: GPL-3
 Encoding: UTF-8
 SystemRequirements: C++11
-Imports: Rcpp (>= 1.0.3)
-LinkingTo: Rcpp, RcppArmadillo (>= 0.9.850.1.0)
+Imports: Rcpp (>= 0.11.0), RcppArmadillo (>= 0.9.850.1.0)
+LinkingTo: Rcpp (>= 0.11.0), RcppArmadillo (>= 0.9.850.1.0)
+Suggests: 
+    testthat (>= 3.0.0)
 LazyData: true
 RoxygenNote: 7.2.3

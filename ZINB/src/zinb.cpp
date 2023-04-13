@@ -192,7 +192,7 @@ List LRT1G(const arma::mat& X, const arma::vec& y_k, double tol = 1e-4, int maxI
 // [[Rcpp::export]]
 List LRTnG(const arma::mat& X, const arma::mat& Y, double tol = 1e-4, int maxIter = 1000, Nullable<List> initial = R_NilValue) {
   if (Y.n_cols == 1) {
-    stop("Seems like you are testing a single variable, please try `LRT1G`");
+    warning("It seems like you are testing a single variable. You may use `LRT1G`");
   }
   if (X.n_rows != Y.n_rows) {
     stop("The dimension of X and Y does not match!");
@@ -205,9 +205,16 @@ List LRTnG(const arma::mat& X, const arma::mat& Y, double tol = 1e-4, int maxIte
   arma::vec p_value(k);
 
   for (int i = 0; i < k; ++i) {
-    List out = LRT1G(X, Y.col(i), tol, maxIter, initial);
-    Chisq(i) = as<double>(out["Chisq"]);
-    p_value(i) = as<double>(out["p.value"]);
+    // error detection: keep robust for multiple tests
+    try{
+      List out = LRT1G(X, Y.col(i), tol, maxIter, initial);
+      Chisq(i) = as<double>(out["Chisq"]);
+      p_value(i) = as<double>(out["p.value"]);
+    } catch(...) {
+      warning("Error in test ", i+1, ", setting Chisq and p_value to NA");
+      Chisq(i) = NA_REAL;
+      p_value(i) = NA_REAL;
+    }
   }
 
   return List::create(_["Chisq"] = Chisq, _["df"] = 2 * (p - 1), _["p.value"] = p_value);

@@ -4,12 +4,21 @@
 \alias{fit.zinb}
 \title{Zero-Inflated Negative Binomial Regression}
 \usage{
-fit.zinb(X, y, tol = 1e-04, maxIter = 1000, initial = NULL)
+fit.zinb(
+  X,
+  y,
+  add_intercept = TRUE,
+  tol = 1e-04,
+  maxIter = 1000,
+  initial = NULL
+)
 }
 \arguments{
 \item{X}{A \eqn{n} by \eqn{p} design matrix. Each row is a vector of observation with \eqn{p} covariates. Number of observations \eqn{n} must be greater than number of covariates \eqn{p}.}
 
 \item{y}{An \eqn{n}-dimensional response vector.}
+
+\item{add_intercept}{(\strong{optional}) Whether an intercept term should be added to the design matrix X. If so, the first element of \code{beta} and \code{gamma} would be the intercept. Default is TRUE.}
 
 \item{tol}{(\strong{optional}) The tolerance level in the iterative estimation procedure. The defalut value is 1e-4.}
 
@@ -34,6 +43,6 @@ Conduct zero-inflated negative binomial regression for data. Estimate paramters 
 n <- 100
 X <- matrix(c(rep(1, 50), rbinom(50, 1, 0.5)), 50, 2)
 y <- sample(c(rnbinom(20, 10, 0.5), rep(0, 30)))
-fit.mod <- fit.zinb(X, y)
+fit.mod <- fit.zinb(X, y, add_intercept = FALSE)
 fit.mod$beta
 }
