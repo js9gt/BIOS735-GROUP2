@@ -125,7 +125,9 @@ Finally, we will compare the performance of our model with a Random Forest model
 
 Tuning parameters that can be adjusted include the number of trees generated, the subset of the number of predictors considered at each split, and the measure used to assess the quality of the split, among others.
 
-The data will be split into 10 folds. The logistic regression will be trained on 9 folds, with 1 fold held back as the testing data. This process will be repeated until we have 10 different performance scores and the model has been trained 10 times. We will perform the same process to assess the performance of the random forest algorithm. A 10-fold cross validation procedure where participants a part of the study are randomly allocated to 1 of 10 independent folds of approximately equal size. The training and testing are iterated over such that each individual fold was treated as a testing data set on its own once, while the remaining 9 folds are treated as the training data set. Measurements used to assess the random forest algorithm include accuracy, sensitivity, and specificity.
+Before performing the analysis, the data will be split into a training and testing set following an $80/20$ train/test split. The training will be performed on the training data for both the random forest and the logistic regression model. 
+
+The data will be split into 10 folds within the training data. The logistic regression will be trained on 9 folds, with 1 fold held back as the testing data. This process will be repeated until we have 10 different performance scores and the model has been trained 10 times. We will perform the same process to assess the performance of the random forest algorithm. A 10-fold cross validation procedure where participants a part of the study are randomly allocated to 1 of 10 independent folds of approximately equal size. The training and testing are iterated over such that each individual fold was treated as a testing data set on its own once, while the remaining 9 folds are treated as the training data set. Measurements used to assess the random forest algorithm include accuracy, sensitivity, and specificity.
 
 * Accuracy will be calculated by summing the number of correctly predicted individuals with ASD divided by the total number of individuals.
 
@@ -135,7 +137,7 @@ The data will be split into 10 folds. The logistic regression will be trained on
 
 In order to tune the parameters, a grid search will be conducted during the 10-fold cross validation procedure in the random forest.
 
-Finally, to compare logistic regression and random forest classification performance, ROC AUCs will be computed and compared for the two, as well as the aforementioned sensitivity and specificity calculations for both models.
+Finally, to compare logistic regression and random forest classification performance, ROC AUCs will be computed and compared for the two, as well as the aforementioned sensitivity and specificity calculations for both models, after applying the trained models on the unseen test data.
 
 ## Package
 
