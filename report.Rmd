@@ -11,13 +11,12 @@ header-includes: \setlength\parindent{24pt}
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = T, warning = FALSE, message = FALSE)
 ```
 
 ```{r include=FALSE}
 # Packages
 library(RefManageR)
-
 ```
 
 # Introduction
@@ -76,8 +75,6 @@ The first step in the process is to identify the OTUs with significantly differe
 
 ## Step 1: Find differential abundance species using the zero inflated negative binomial (ZINB) model
 
-\textcolor{red}{below copied from the proposal. We need to include: clear description of module 2 likelihood based methods used with likelihood, estimation procedure/hypothesis testing approach, motivation for use and justification, assumptions}
-
 PDF of Negative Binomial distribution with mean parameter $\mu_{i,g}$ and dispersion parameter $\theta_g$:
 
 \begin{equation}
@@ -92,7 +89,7 @@ Suppose $Y_{i, g} \sim Z I N B\left(\mu_{i, g}, \theta_g, \pi_{i, g}\right)$,
 \left[(1-\pi_{i,g})\frac{\Gamma\left(y_{i,g}+\theta_g^{-1}\right)}{y_{i,g} !\Gamma\left(\theta_g^{-1}\right)}\left(\frac{\theta_ g \mu _{i , g}}{1+\theta_ g \mu _{i , g}}\right)^{y_{i,g}}\left(\frac{1}{1+\theta_ g \mu _{i , g}}\right)^{\theta_g^{-1}}\right]^{I(y_{i,g}>0)}$} \label{Eq_1}
 \end{equation}
 
-Suppose $Z_{i,g}$ indicates whether or not $Y_{i,g}$ belongs to the zero-inflated part. We can also use the complete data likelihood (CDL) to rewrite \ref{Eq_1}.
+The indicator exponents mark which parts belong to or don't belong to the zero-inflated part. Next, in order to use the EM algorith, we need to include a latent variable which indicates membership to the zero-inflated part. Suppose $Z_{i,g}$ indicates whether or not $Y_{i,g}$ belongs to the zero-inflated part. We can also use the complete data likelihood (CDL) to rewrite \ref{Eq_1}.
 
 \begin{equation}
 \resizebox{.92\hsize}{!}{$f\left(Y_{i , g} =y_{i,g},Z_{i,g}= z_{i,g}\mid  u_ {i, g}, \theta_ g, \pi_{i,g}\right)=
@@ -106,7 +103,7 @@ For the $g$th species, the CDL can be written as
 \prod_{i=1}^{n}f\left(Y_{i , g} =y_{i,g},Z_{i,g}= z_{i,g}\mid  u_ {i, g}, \theta_ g, \pi_{i,g}\right)
 \end{equation}
 
-Therefore, we can use the EM algorithm to find the MLE for the $g$th OTU.
+Since we now have the complete data likelihood, we just need to take the log of it to obtain the log-likelihood to be used in the EM algorithm. Therefore, we can use the EM algorithm to find the MLE for the $g$th OTU.
 
 In order to test the differential abundance status, we need to model $\log(\mu_{i,g})=X_i^{\top} \beta_g$, where $\beta_g=(\beta^{(Intercept)}_g, \beta^{D}_g)^{\top}$, $\text{logit} (\pi_{i,g})=X_i^{\top} \gamma_g$, where $\gamma_g=(\gamma^{(Intercept)}_g, \gamma^{D}_g)^{\top}$.
 
@@ -120,9 +117,7 @@ Under $H_0$, $-2\log(\text{LRT})\rightarrow \chi^2(2)$. We can test the species 
 
 ## Step 2: Using logistic regression to predict ASD status using the differential abundance species
 
-Using the identified OTUs from step 1, we will fit a logistic regression to predict ASD status, a binary outcome.
-
-\textcolor{red}{what do we mean by both compositional and count data? Need to flesh out this section}
+Using the identified OTUs from step 1, we will fit a logistic regression to predict ASD status, a binary outcome, using the measurements as count data.
 
 ## Step 3: Compare to Random Forest
 
@@ -144,58 +139,78 @@ Finally, to compare logistic regression and random forest classification perform
 
 ## Package
 
-\textcolor{red}{include brief package description with the relevant functions}
+The "caret" package is a pre-written package that allows us to use a pre-coded random forest model and allows us to perform cross validation simultaneously. 
 
-\textcolor{red}{Also add description of the random forest "caret" package briefly}
+Our package, the "ZINB" package includes the following functions:
+
+* LRT1D: Tests the intercept model against the model fitted by the design matrix. Outputs parameters of the fitted model, chisquared statistics, degrees of freedom, and p-values.
+
+* fit.zinb: Conducts ZINB negative binomial regression on the data. Estimates parameters and their covariance using the EM algorithm. Outputs estimates for the coefficients of the negative binomial model, the zero inflated model, the reciprocal of the size parameter for the negative binomial distribution, the covariance matrix for all estimated parameters, aand the log-likelihood of the estimated model.
+
+* LRTnD: Tests for the intercept model against the model fitted by the design matrix-- allows for multiple responses. Outputs parameters of the fitted model, chisquared statistics, degrees of freedom, and p-values.
 
 # Results
 
-\textcolor{red}{First: fit our model with ZINB and Poisson regression}
+As a preface, while the original model intention was written as above, there were still too many OTU's selected by the ZINB model for the logistic regression to converge. Thus in our final analysis, we used penalized logistic regression through lasso regression, which can perform variable selection and thus further reduce the dimensions of our covariates.
+
+As an extension of our approach in order to use the model as intended, we may consider merging OTUs by taxonomy to create higher order clades and therefore fewer OTUs to be used as predictors. This may solve the instability we saw in the ZINB model, where if the counts contained too few or too many 0 values, the information was almost singular. However, this does not appear to be a problem specific to our package, as other pre-written packages encounter this issue as well when we compare our results.
+
+
 ```{r}
 ## Loading Package
 library(ZINB)
+library(Rcpp)
+library(dplyr)
+library(caret)
+library(glmnet)
+library(pROC)
+
+## load function, which uses the ZINB model, fits the cross validated model, and 
+# compares with random forest
+source("function.R")
 
 ## read in data
-microbiome <- read.csv("~/Desktop/BIOS761-GROUP2/Data/microbiome.csv")
+microbiome = t(read.csv("Data/microbiome.csv",row.names = 1)[,-1])
 
-# eventually wrap in 10 fold CV
+# split data into train and test
+set.seed(1)
+train.num = sort(sample(1:nrow(microbiome),0.8*nrow(microbiome)))
+train = microbiome[train.num,]
+test = microbiome[-train.num,]
 
-## fitting ZINB model
-# n: number of species
-# p: the actual subjects
-# y: n-dimensional response vector
-# X: nxp 
-
-## LRT for multiple responses to find important predictors
-
-## fit logistic regression with those identified predictors
+## analyze the data
+result = model_compare(train,test)
 
 
-## calculate accuracy, specificity, sensitivity metrics
+## generate ROC curve and AUC score
 
-## calculate ROC and AUC
+tiff("Figures/ROC.tiff", units="in", width=5, height=5, res=200)
+roc(result$status,as.numeric(result$pred.lasso),plot=T,percent = T,legacy.axes = T,
+    print.auc = T,col = "#377eb8",
+    ylab = "True positive (%)",xlab = "False Positive %",main = "ROC")
+plot.roc(result$status,as.numeric(result$pred.rf),percent = T,add=T,print.auc = T,
+         print.auc.y = 40,col="#4daf4a")
+legend("bottomright",legend = c("Lasso","Random forest"),col=c("#377eb8","#4daf4a"),lwd=4)
+dev.off()
+
+## generate information of confusion matrix
+## calculate accuracy, specificity, sensitivity metrics for both model
+
+result$status = relevel(result$status,"TRUE")
+result$pred.lasso = as.factor(result$pred.lasso > 0.5)
+result$pred.lasso  = relevel(result$pred.lasso,"TRUE")
+result$pred.rf = as.factor(result$pred.rf > 0.5)
+result$pred.rf  = relevel(result$pred.rf,"TRUE")
+
+cm.lasso <- confusionMatrix(data = result$pred.lasso, reference = result$status)
+cm.rf <- confusionMatrix(data = result$pred.rf, reference = result$status)
+
+draw_confusion_matrix(cm.lasso,title = "Lasso")
+draw_confusion_matrix(cm.rf,title = "Random Forest")
 ```
-
-\textcolor{red}{Second: fit random forest}
-```{r}
-## Loading Package
-library(caret)
-
-# wrap in 10 fold CV
-
-# random forest with entire dataset using "caret" package
-
-# grid search for tuning parameters: # trees, # predictors considered at each split
-
-## calculate accuracy, specificity, sensitivity metrics
-
-## calculate ROC and AUC
-```
-
 
 # Discussion
 
-\textcolor{red}{Add written comparison}
 
 
 # References (Must be the last section to have bibliography printed after)
