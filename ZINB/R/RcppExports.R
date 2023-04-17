@@ -33,15 +33,15 @@ dznbinom <- function(x, size, prob, infl) {
     .Call('_ZINB_dznbinom', PACKAGE = 'ZINB', x, size, prob, infl)
 }
 
-par_EM <- function(X, y_k, tol = 1e-4, maxIter = 1000L, initial = NULL) {
-    .Call('_ZINB_par_EM', PACKAGE = 'ZINB', X, y_k, tol, maxIter, initial)
+par_EM <- function(X, y_k, tol = 1e-3, maxIter = 5000L, inflation = TRUE, initial = NULL) {
+    .Call('_ZINB_par_EM', PACKAGE = 'ZINB', X, y_k, tol, maxIter, inflation, initial)
 }
 
-LRT1G <- function(X, y_k, tol = 1e-4, maxIter = 1000L, initial = NULL) {
-    .Call('_ZINB_LRT1G', PACKAGE = 'ZINB', X, y_k, tol, maxIter, initial)
+LRT1G <- function(X, y_k, tol = 1e-3, maxIter = 5000L, inflation = TRUE, initial = NULL) {
+    .Call('_ZINB_LRT1G', PACKAGE = 'ZINB', X, y_k, tol, maxIter, inflation, initial)
 }
 
-LRTnG <- function(X, Y, tol = 1e-4, maxIter = 1000L, initial = NULL) {
-    .Call('_ZINB_LRTnG', PACKAGE = 'ZINB', X, Y, tol, maxIter, initial)
+LRTnG <- function(X, Y, inflation, tol = 1e-3, maxIter = 5000L, initial = NULL) {
+    .Call('_ZINB_LRTnG', PACKAGE = 'ZINB', X, Y, inflation, tol, maxIter, initial)
 }
 

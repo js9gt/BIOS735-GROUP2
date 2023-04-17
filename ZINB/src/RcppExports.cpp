@@ -125,8 +125,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // par_EM
-List par_EM(const arma::mat& X, const arma::vec& y_k, double tol, int maxIter, Nullable<List> initial);
-RcppExport SEXP _ZINB_par_EM(SEXP XSEXP, SEXP y_kSEXP, SEXP tolSEXP, SEXP maxIterSEXP, SEXP initialSEXP) {
+List par_EM(const arma::mat& X, const arma::vec& y_k, double tol, int maxIter, int inflation, Nullable<List> initial);
+RcppExport SEXP _ZINB_par_EM(SEXP XSEXP, SEXP y_kSEXP, SEXP tolSEXP, SEXP maxIterSEXP, SEXP inflationSEXP, SEXP initialSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -134,14 +134,15 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< const arma::vec& >::type y_k(y_kSEXP);
     Rcpp::traits::input_parameter< double >::type tol(tolSEXP);
     Rcpp::traits::input_parameter< int >::type maxIter(maxIterSEXP);
+    Rcpp::traits::input_parameter< int >::type inflation(inflationSEXP);
     Rcpp::traits::input_parameter< Nullable<List> >::type initial(initialSEXP);
-    rcpp_result_gen = Rcpp::wrap(par_EM(X, y_k, tol, maxIter, initial));
+    rcpp_result_gen = Rcpp::wrap(par_EM(X, y_k, tol, maxIter, inflation, initial));
     return rcpp_result_gen;
 END_RCPP
 }
 // LRT1G
-List LRT1G(const arma::mat& X, const arma::vec& y_k, double tol, int maxIter, Nullable<List> initial);
-RcppExport SEXP _ZINB_LRT1G(SEXP XSEXP, SEXP y_kSEXP, SEXP tolSEXP, SEXP maxIterSEXP, SEXP initialSEXP) {
+List LRT1G(const arma::mat& X, const arma::vec& y_k, double tol, int maxIter, int inflation, Nullable<List> initial);
+RcppExport SEXP _ZINB_LRT1G(SEXP XSEXP, SEXP y_kSEXP, SEXP tolSEXP, SEXP maxIterSEXP, SEXP inflationSEXP, SEXP initialSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -149,23 +150,25 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< const arma::vec& >::type y_k(y_kSEXP);
     Rcpp::traits::input_parameter< double >::type tol(tolSEXP);
     Rcpp::traits::input_parameter< int >::type maxIter(maxIterSEXP);
+    Rcpp::traits::input_parameter< int >::type inflation(inflationSEXP);
     Rcpp::traits::input_parameter< Nullable<List> >::type initial(initialSEXP);
-    rcpp_result_gen = Rcpp::wrap(LRT1G(X, y_k, tol, maxIter, initial));
+    rcpp_result_gen = Rcpp::wrap(LRT1G(X, y_k, tol, maxIter, inflation, initial));
     return rcpp_result_gen;
 END_RCPP
 }
 // LRTnG
-List LRTnG(const arma::mat& X, const arma::mat& Y, double tol, int maxIter, Nullable<List> initial);
-RcppExport SEXP _ZINB_LRTnG(SEXP XSEXP, SEXP YSEXP, SEXP tolSEXP, SEXP maxIterSEXP, SEXP initialSEXP) {
+List LRTnG(const arma::mat& X, const arma::mat& Y, const arma::vec& inflation, double tol, int maxIter, Nullable<List> initial);
+RcppExport SEXP _ZINB_LRTnG(SEXP XSEXP, SEXP YSEXP, SEXP inflationSEXP, SEXP tolSEXP, SEXP maxIterSEXP, SEXP initialSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< const arma::mat& >::type X(XSEXP);
     Rcpp::traits::input_parameter< const arma::mat& >::type Y(YSEXP);
+    Rcpp::traits::input_parameter< const arma::vec& >::type inflation(inflationSEXP);
     Rcpp::traits::input_parameter< double >::type tol(tolSEXP);
     Rcpp::traits::input_parameter< int >::type maxIter(maxIterSEXP);
     Rcpp::traits::input_parameter< Nullable<List> >::type initial(initialSEXP);
-    rcpp_result_gen = Rcpp::wrap(LRTnG(X, Y, tol, maxIter, initial));
+    rcpp_result_gen = Rcpp::wrap(LRTnG(X, Y, inflation, tol, maxIter, initial));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -179,9 +182,9 @@ static const R_CallMethodDef CallEntries[] = {
     {"_ZINB_l2_theta", (DL_FUNC) &_ZINB_l2_theta, 4},
     {"_ZINB_In", (DL_FUNC) &_ZINB_In, 7},
     {"_ZINB_dznbinom", (DL_FUNC) &_ZINB_dznbinom, 4},
-    {"_ZINB_par_EM", (DL_FUNC) &_ZINB_par_EM, 5},
-    {"_ZINB_LRT1G", (DL_FUNC) &_ZINB_LRT1G, 5},
-    {"_ZINB_LRTnG", (DL_FUNC) &_ZINB_LRTnG, 5},
+    {"_ZINB_par_EM", (DL_FUNC) &_ZINB_par_EM, 6},
+    {"_ZINB_LRT1G", (DL_FUNC) &_ZINB_LRT1G, 6},
+    {"_ZINB_LRTnG", (DL_FUNC) &_ZINB_LRTnG, 6},
     {NULL, NULL, 0}
 };
 

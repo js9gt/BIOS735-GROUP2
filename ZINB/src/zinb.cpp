@@ -1,4 +1,6 @@
+#define ARMA_WARN_LEVEL 1
 #include <RcppArmadillo.h>
+#include <Rcpp.h>
 using namespace Rcpp;
 // [[Rcpp::depends(RcppArmadillo)]]
 // [[Rcpp::plugins(cpp11)]]
@@ -46,7 +48,7 @@ arma::vec score(const arma::mat& X, const arma::vec& y_k, const arma::vec& z_k, 
     arma::vec result(2 * p + 1);
     result.subvec(0, p - 1) = X.t() * V * ey;
     result.subvec(p, 2 * p - 1) = X.t() * ez;
-    result(2 * p) = sum(l1_theta(z_k, y_k, mu_k, thetak));
+    result(2 * p) = sum(l1_theta(z_k, y_k, mu_k, thetak)) * thetak;
 
     return result;
 }
@@ -64,7 +66,7 @@ arma::vec l2_theta(const arma::vec& z_k, const arma::vec& y_k, const arma::vec& 
   arma::vec l2 = (1 - z_k) / pow(thetak, 4) % (
     2 * thetak * R::digamma(1 / thetak) - 2 * thetak * dg +
     2 * thetak * (1 + thetak * mu_k) + R::trigamma(1 / thetak) - tg -
-    2 * pow(thetak, 2) * mu_k / (1 + thetak) - 
+    2 * pow(thetak, 2) * mu_k / (1 + thetak) -
     2 * pow(thetak, 2) * mu_k / (1 + thetak * mu_k)
   );
   return l2;
@@ -84,7 +86,7 @@ arma::mat In(const arma::mat& X, const arma::vec& y_k, const arma::vec& z_k, con
   arma::mat I_mat = arma::zeros<arma::mat>(2 * p + 1, 2 * p + 1);
   I_mat.submat(0, 0, p - 1, p - 1) = X.t() * Py * X;
   I_mat.submat(p, p, 2 * p - 1, 2 * p - 1) = X.t() * Pz * X;
-  I_mat(2 * p, 2 * p) = sum(l2_theta(z_k, y_k, mu_k, thetak));
+  I_mat(2 * p, 2 * p) = sum(l2_theta(z_k, y_k, mu_k, thetak)) * pow(thetak, 2) + sum(l1_theta(z_k, y_k, mu_k, thetak)) * thetak;
 
   return I_mat;
 }
@@ -104,12 +106,21 @@ arma::vec dznbinom(const arma::vec& x, double size, const arma::vec& prob, arma:
 
 // EM algorithm
 // [[Rcpp::export]]
-List par_EM(const arma::mat& X, const arma::vec& y_k, double tol = 1e-4, int maxIter = 1000, Nullable<List> initial = R_NilValue) {
+List par_EM(const arma::mat& X, const arma::vec& y_k, double tol = 1e-3, int maxIter = 5000, int inflation = true, Nullable<List> initial = R_NilValue) {
+  if (X.n_rows != y_k.n_elem) {
+    stop("The dimension of X and y does not match!");
+  }
+
+  if (min(y_k) < 0){
+    stop("Invalid input of y. Must be positive or zero.");
+  }
+  int n = X.n_rows;
   int p = X.n_cols;
 
   arma::vec betak, gammak;
-  double thetak;
+  long double thetak, loglikelihood;
 
+  // model initialization
   if (initial.isNull()) {
     betak = gammak = arma::zeros<arma::vec>(p);
     thetak = 1;
@@ -120,77 +131,122 @@ List par_EM(const arma::mat& X, const arma::vec& y_k, double tol = 1e-4, int max
     thetak = as<double>(initial_list["theta"]);
   }
 
+  // determin whether inflated model should be fitted
+  if(min(y_k) != 0) {
+    inflation = false;
+  }
+
   int iter = 0;
   double eps = INFINITY;
-  arma::mat I_mat(2 * p + 1, 2 * p + 1);
-  while (iter < maxIter && eps > tol) {
-    // E step
+  arma::mat I_mat, identity;
+
+  // zero inflated model
+  if(inflation){
+    identity = arma::eye(2 * p + 1, 2 * p + 1);
+    while (iter < maxIter && eps > tol) {
+      // E step
+      arma::vec pi_k = c_pi(X, gammak);
+      arma::vec mu_k = c_mu(X, betak);
+      arma::vec z_k = Qik(pi_k, mu_k, y_k, thetak);
+
+      // M step using one step Newton-Raphson method
+      arma::vec s = score(X, y_k, z_k, mu_k, pi_k, thetak);
+      I_mat = In(X, y_k, z_k, mu_k, pi_k, gammak, thetak);
+
+      arma::vec par_old = join_vert(join_vert(betak, gammak), arma::vec({log(thetak)}));
+      arma::vec par_new = par_old + arma::solve(I_mat, s, arma::solve_opts::fast + arma::solve_opts::allow_ugly);
+      eps = sqrt(sum(square(par_old - par_new)));
+
+      betak = par_new.subvec(0, p - 1);
+      gammak = par_new.subvec(p, 2 * p - 1);
+      thetak = exp(par_new(2 * p));
+
+      iter = iter + 1;
+    }
+    // compute the loglikelihood
     arma::vec pi_k = c_pi(X, gammak);
     arma::vec mu_k = c_mu(X, betak);
-    arma::vec z_k = Qik(pi_k, mu_k, y_k, thetak);
+    arma::vec p_0 = 1 / (1 + thetak * mu_k);
+    arma::vec logprob = log(dznbinom(y_k, 1 / thetak, p_0, pi_k));
+    // remove NA and Infs
+    loglikelihood = accu(logprob.elem(find_finite(logprob)));
+  }
+  else{
+    // this is the given information for the non-inflated model
+    identity = arma::eye(p + 1, p + 1);
+    arma::vec pi_k = arma::zeros(n);
+    arma::vec z_k = arma::zeros(n);
+    arma::uvec index = arma::join_cols(arma::regspace<arma::uvec>(0, p - 1), arma::uvec({static_cast<unsigned int>(2 * p)}));
 
-    // M step using one step Newton-Raphson method
-    arma::vec s = score(X, y_k, z_k, mu_k, pi_k, thetak);
-    I_mat = In(X, y_k, z_k, mu_k, pi_k, gammak, thetak);
+    // fit a negative binomial regression
+    while (iter < maxIter && eps > tol) {
+      arma::vec mu_k = c_mu(X, betak);
+      // one step Newton-Raphson method
+      arma::vec s = score(X, y_k, z_k, mu_k, pi_k, thetak)(index);
+      I_mat = In(X, y_k, z_k, mu_k, pi_k, gammak, thetak)(index, index);
 
-    arma::vec par_old = join_vert(join_vert(betak, gammak), arma::vec({thetak}));
-    arma::vec par_new = par_old + arma::solve(I_mat, s, arma::solve_opts::allow_ugly);
-    eps = sqrt(sum(square(par_old - par_new)) / sum(square(par_old)));
+      arma::vec par_old = join_vert(betak, arma::vec({log(thetak)}));
+      arma::vec par_new = par_old + arma::solve(I_mat, s, arma::solve_opts::fast + arma::solve_opts::allow_ugly);
+      eps = sqrt(sum(square(par_old - par_new)));
 
-    betak = par_new.subvec(0, p - 1);
-    gammak = par_new.subvec(p, 2 * p - 1);
-    thetak = par_new(2 * p);
-    if (thetak < 0) {
-      thetak = std::min(0.01, 1 / (max(y_k) + 1));
+      betak = par_new.subvec(0, p - 1);
+      thetak = exp(par_new(p));
+      iter = iter + 1;
     }
-
-    iter = iter + 1;
+    // compute the loglikelihood
+    arma::vec mu_k = c_mu(X, betak);
+    arma::vec p_0 = 1 / (1 + thetak * mu_k);
+    arma::vec logprob = log(dznbinom(y_k, 1 / thetak, p_0, pi_k));
+    // remove NA and Infs
+    loglikelihood = accu(logprob.elem(find_finite(logprob)));
   }
 
   if (eps > tol) {
     Rcpp::warning("The algorithm completes without convergence.");
   }
-
-  arma::vec pi_k = c_pi(X, gammak);
-  arma::vec mu_k = c_mu(X, betak);
-  arma::vec p_0 = 1 / (1 + thetak * mu_k);
-  double loglikelihood = log(prod(dznbinom(y_k, 1 / thetak, p_0, pi_k)));
-
   return List::create(
-    _["beta"] = betak, 
-    _["gamma"] = gammak, 
-    _["theta"] = thetak, 
-    _["vcov"] = arma::solve(I_mat, arma::eye(2 * p + 1, 2 * p + 1), arma::solve_opts::allow_ugly), 
+    _["inflation"] = inflation,
+    _["beta"] = betak,
+    _["gamma"] = gammak,
+    _["theta"] = thetak,
+    _["vcov"] = arma::solve(I_mat, identity, arma::solve_opts::allow_ugly),
     _["loglikelihood"] = loglikelihood
   );
 }
 
 // Test Significance for single species
 // [[Rcpp::export]]
-List LRT1G(const arma::mat& X, const arma::vec& y_k, double tol = 1e-4, int maxIter = 1000, Nullable<List> initial = R_NilValue) {
+List LRT1G(const arma::mat& X, const arma::vec& y_k, double tol = 1e-3, int maxIter = 5000, int inflation = true, Nullable<List> initial = R_NilValue) {
   if (X.n_rows != y_k.n_elem) {
     stop("The dimension of X and y does not match!");
   }
   int n = X.n_rows;
   int p = X.n_cols;
 
+  int df;
+
   // alternative hypothesis
-  List par_alt = par_EM(X, y_k, tol, maxIter, initial);
+  List par_alt = par_EM(X, y_k, tol, maxIter, inflation, initial);
   double l_alt = as<double>(par_alt["loglikelihood"]);
 
   // null hypothesis
   arma::mat X_0 = arma::ones<arma::mat>(n, 1);
-  List par_0 = par_EM(X_0, y_k, tol, maxIter, initial);
+  List par_0 = par_EM(X_0, y_k, tol, maxIter, inflation, initial);
   double l_0 = as<double>(par_0["loglikelihood"]);
   double Chisq = -2 * (l_0 - l_alt);
 
+  if(as<int>(par_0["inflation"]) == 1){
+    df = 2 * (p - 1);
+  }
+  else df = p - 1;
+
   // summarize results
-  return List::create(_["par"] = par_alt, _["Chisq"] = Chisq, _["df"] = 2 * (p - 1), _["p.value"] = R::pchisq(Chisq, 2 * (p - 1), 0, 0));
+  return List::create(_["par"] = par_alt, _["Chisq"] = Chisq, _["df"] = df, _["p.value"] = R::pchisq(Chisq, df, 0, 0));
 }
 
 // Multiple Testing
 // [[Rcpp::export]]
-List LRTnG(const arma::mat& X, const arma::mat& Y, double tol = 1e-4, int maxIter = 1000, Nullable<List> initial = R_NilValue) {
+List LRTnG(const arma::mat& X, const arma::mat& Y, const arma::vec& inflation, double tol = 1e-3, int maxIter = 5000, Nullable<List> initial = R_NilValue) {
   if (Y.n_cols == 1) {
     warning("It seems like you are testing a single variable. You may use `LRT1G`");
   }
@@ -198,24 +254,26 @@ List LRTnG(const arma::mat& X, const arma::mat& Y, double tol = 1e-4, int maxIte
     stop("The dimension of X and Y does not match!");
   }
 
-  int p = X.n_cols;
   int k = Y.n_cols;
 
   arma::vec Chisq(k);
   arma::vec p_value(k);
+  arma::vec df(k);
 
   for (int i = 0; i < k; ++i) {
-    // error detection: keep robust for multiple tests
+    // keep running for multiple tests even if the error occurs
     try{
-      List out = LRT1G(X, Y.col(i), tol, maxIter, initial);
+      List out = LRT1G(X, Y.col(i), tol, maxIter, inflation(i), initial);
       Chisq(i) = as<double>(out["Chisq"]);
       p_value(i) = as<double>(out["p.value"]);
+      df(i) = as<double>(out["df"]);
     } catch(...) {
-      warning("Error in test ", i+1, ", setting Chisq and p_value to NA");
+      warning("The regression model for one variable fails to converge, set its Chisq and p-value to be NA");
       Chisq(i) = NA_REAL;
       p_value(i) = NA_REAL;
+      df(i) = NA_REAL;
     }
   }
 
-  return List::create(_["Chisq"] = Chisq, _["df"] = 2 * (p - 1), _["p.value"] = p_value);
+  return List::create(_["Chisq"] = Chisq, _["df"] = df, _["p.value"] = p_value);
 }

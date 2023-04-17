@@ -4,12 +4,14 @@
 \alias{LRTnD}
 \title{Likelihood Ratio Test for Zero-Inflated Negative Binomial Regression (Multiple Responses)}
 \usage{
-LRTnD(X, Y, add_intercept = TRUE, ...)
+LRTnD(X, Y, inflation = NULL, add_intercept = TRUE, ...)
 }
 \arguments{
-\item{X}{A \eqn{n} by \eqn{p} design matrix. Each row is a vector of observation with \eqn{p} covariates. Number of observations \eqn{n} must be greater than number of covariates \eqn{p}.}
+\item{X}{An \eqn{n} by \eqn{p} design matrix. Each row is a vector of observation with \eqn{p} covariates. Number of observations \eqn{n} must be greater than number of covariates \eqn{p}.}
 
-\item{Y}{An \eqn{n} by \eqn{p} response matrix.}
+\item{Y}{An \eqn{n} by \eqn{q} response matrix.}
+
+\item{inflation}{(\strong{optional}) A \eqn{q}-dimensional logical vector indicating whether the inflated model should be used for each test. If set to NULL, use the inflated model for all tests. Default is NULL.}
 
 \item{add_intercept}{(\strong{optional}) Whether an intercept term should be added to the design matrix X. If so, the first element of \code{beta} and \code{gamma} would be the intercept. Default is TRUE.}
 
@@ -19,7 +21,7 @@ LRTnD(X, Y, add_intercept = TRUE, ...)
 A list including the following terms will be returned:
 \describe{
 \item{\code{Chisq}}{A vector of calculated Chisq statistics.}
-\item{\code{df}}{The degree of freedom of this test.}
+\item{\code{df}}{The degree of freedom of the tests.}
 \item{\code{p.value}}{A vector of computed p-values.}
 \item{\code{q.value}}{A vector of adjusted p-values using the Benjamini-Hochberg (BH) correction.}
 }

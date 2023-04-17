@@ -8,8 +8,9 @@ fit.zinb(
   X,
   y,
   add_intercept = TRUE,
-  tol = 1e-04,
-  maxIter = 1000,
+  tol = 0.001,
+  maxIter = 5000,
+  inflation = TRUE,
   initial = NULL
 )
 }
@@ -20,15 +21,18 @@ fit.zinb(
 
 \item{add_intercept}{(\strong{optional}) Whether an intercept term should be added to the design matrix X. If so, the first element of \code{beta} and \code{gamma} would be the intercept. Default is TRUE.}
 
-\item{tol}{(\strong{optional}) The tolerance level in the iterative estimation procedure. The defalut value is 1e-4.}
+\item{tol}{(\strong{optional}) The tolerance level in the iterative estimation procedure. The defalut value is 1e-3.}
 
-\item{maxIter}{(\strong{optional}) Maximum number of iterations. Default is 1000.}
+\item{maxIter}{(\strong{optional}) Maximum number of iterations. Default is 5000.}
+
+\item{inflation}{(\strong{optional}) Whether the inflation model is used. Default is TRUE.}
 
 \item{initial}{(\strong{optional}) A list specifies the initial point of the algorithm \code{list(beta=..., gamma=..., theta=...)}. Default is NULL.}
 }
 \value{
 A list including the following terms will be returned:
 \describe{
+\item{\code{infaltion}}{Logical variable to indicate whether the model is inflated. When there is no zero count in y, this should be 0.}
 \item{\code{beta}}{The coefficients for the Negative Binomial Model.}
 \item{\code{gamma}}{The coefficients for the Zero Inflated Model.}
 \item{\code{theta}}{The reciprocal of the size parameter for the Negative Binomial Distribution.}
