@@ -44,9 +44,7 @@ The dataset was found on Kaggle, which originally drew from [@dan2020altered], a
 Kaggle has available a 16S rRNA sequence of gut microbiota with 1322 rows and 256 columns. The rows are numbered according to Operational Taxonomic Units (OTUs) which are used to classify groups of closely related individuals, similar to the concept of Linnaean taxonomy or evolutionary taxonomy. OTUs construct "mathematically" defined taxa and their use is widely accepted and applied to describe bacterial communities using amplicon sequencing of 16S rRNA gene [@llado2019concept]. So, there were 1322 of these OTUs identified. The columns then include a "taxonomy" column, which are lists of the microbiotic species belonging to that OTU. For the rest of the columns, we have 143 columns denoting sample IDs from TD children, and 111 columns denoting sample IDs from ASD children. Down the columns as observations, we see numbers corresponding to each row (OTU) which indicate a measurement of gene abundance.  
 
 
-
 Additionally, there is a second dataset which contains data from the metagenomic analysis performed for 30 ASD patients and 30 TD patients. The data is presented similarly with patient IDs for 30 ASD and 30 TD children across the top. There are 5619 rows which identify different bacteria present, this time as individual rows rather than in groups like before. Similar to the previous dataset, down the columns as observations, we see measures of abundance in patients. For our project purposes, we will not be using the second dataset, although it could yield interesting results as an extensionn of this project.
-
 
 Typically, the data will need to be preprocessed by transforming the abundance data into proportional data, as well as removing species/groups with a high proportion of 0. Additionally, the data may require transformation such as a log transformation. 
 
@@ -75,6 +73,8 @@ The first step in the process is to identify the OTUs with significantly differe
 
 ## Step 1: Find differential abundance species using the zero inflated negative binomial (ZINB) model
 
+### Model Specification
+
 PDF of Negative Binomial distribution with mean parameter $\mu_{i,g}$ and dispersion parameter $\theta_g$:
 
 \begin{equation}
@@ -83,13 +83,15 @@ f\left(Y_{i , g} =y_{i,g}\mid u_ {i, g}, \theta_ g\right)=\frac{\Gamma\left(y_{i
 
 Suppose $Y_{i, g} \sim Z I N B\left(\mu_{i, g}, \theta_g, \pi_{i, g}\right)$, 
 
+### Likelihood
+
 \begin{equation}
 \resizebox{.92\hsize}{!}{$f\left(Y_{i , g} =y_{i,g}\mid u_ {i, g}, \theta_ g, \pi_{i,g}\right)=
 \left[\pi_{i,g}+(1-\pi_{i,g}) \left(\frac{1}{1+\theta_ g \mu _{i , g}}\right)^{\theta_g^{-1}} \right]^{I[y_{i,g}=0]} 
 \left[(1-\pi_{i,g})\frac{\Gamma\left(y_{i,g}+\theta_g^{-1}\right)}{y_{i,g} !\Gamma\left(\theta_g^{-1}\right)}\left(\frac{\theta_ g \mu _{i , g}}{1+\theta_ g \mu _{i , g}}\right)^{y_{i,g}}\left(\frac{1}{1+\theta_ g \mu _{i , g}}\right)^{\theta_g^{-1}}\right]^{I(y_{i,g}>0)}$} \label{Eq_1}
 \end{equation}
 
-The indicator exponents mark which parts belong to or don't belong to the zero-inflated part. Next, in order to use the EM algorith, we need to include a latent variable which indicates membership to the zero-inflated part. Suppose $Z_{i,g}$ indicates whether or not $Y_{i,g}$ belongs to the zero-inflated part. We can also use the complete data likelihood (CDL) to rewrite \ref{Eq_1}.
+The indicator exponents mark which parts belong to or don't belong to the zero-inflated part. Next, in order to use the EM algorithm, we need to include a latent variable which indicates membership to the zero-inflated part. Suppose $Z_{i,g}$ indicates whether or not $Y_{i,g}$ belongs to the zero-inflated part. We can also use the complete data likelihood (CDL) to rewrite \ref{Eq_1}.
 
 \begin{equation}
 \resizebox{.92\hsize}{!}{$f\left(Y_{i , g} =y_{i,g},Z_{i,g}= z_{i,g}\mid  u_ {i, g}, \theta_ g, \pi_{i,g}\right)=
