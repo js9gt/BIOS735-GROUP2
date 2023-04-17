@@ -153,10 +153,7 @@ Our package, the "ZINB" package includes the following functions:
 
 # Results
 
-As a preface, while the original model intention was written as above, there were still too many OTU's selected by the ZINB model for the logistic regression to converge. Thus in our final analysis, we used penalized logistic regression through lasso regression, which can perform variable selection and thus further reduce the dimensions of our covariates.
-
-As an extension of our approach in order to use the model as intended, we may consider merging OTUs by taxonomy to create higher order clades and therefore fewer OTUs to be used as predictors. This may solve the instability we saw in the ZINB model, where if the counts contained too few or too many 0 values, the information was almost singular. However, this does not appear to be a problem specific to our package, as other pre-written packages encounter this issue as well when we compare our results.
-
+As a preface, while the original model intention was written as above, there were still too many OTU's selected by the ZINB model for the logistic regression to converge. Thus in our final analysis, we used logistic LASSO regression, which can perform variable selection and thus further reduce the dimensions of our covariates.
 
 ```{r}
 ## Loading Package
@@ -213,6 +210,19 @@ draw_confusion_matrix(cm.rf,title = "Random Forest")
 
 # Discussion
 
+In summary, we found that all measurements of performance (accuracy, sensitivity, and specificity) on the test data indicate that random forest outperforms the logistic LASSO model.
+
+## Limitations
+
+1. ZINB is unstable when there are fewer zeros than expected in the data.
+
+2. We used a ZINB model and iteratively included 1 of 1322 OTUs as a covariate in the model to determine whether there is significant differential abundance based on the data. The iterative procedure was done to determine which OTUs to include in a final logistic model to predict ASD status. The procedure substantially reduced the number of OTUs to be considered in the the logistic model to 206 OTUs. 206 OTUs was still too many OTUs to be considered without introducing a penalty that would result in natural variable selection.
+
+3. The test data included a total of 51 participants of which 19 were individuals with ASD and 32 were individuals without ASD. The confusion matrices in the results provide context for the performance measurements, showing that random forest only correctly identified two more individual as having ASD when compared to the logistic LASSO model. With respect to correctly identifying individuals without ASD random forest correctly identified one more individual compared the logistic LASSO model.
+
+## Future Directions
+
+As an extension of our approach in order to use the model as intended, we may consider merging OTUs by taxonomy to create higher order clades and therefore fewer OTUs to be used as predictors. This may solve the instability we saw in the ZINB model, where if the counts contained too few or too many 0 values, the information was almost singular. However, this does not appear to be a problem specific to our package, as other pre-written packages encounter this issue as well when we compare our results. To eliminate the two step approach, one could consider a ZINB model with a penalty such as LASSO, "smoothly clipped absolute deviation (SCAD), or minimax concave penalty (MCP)" [@wang2015variable].
 
 
 # References (Must be the last section to have bibliography printed after)
