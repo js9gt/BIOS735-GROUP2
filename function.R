@@ -86,7 +86,7 @@ model_compare = function(train,test,seed = 1){
   # wrap in 10 fold CV
   # random forest with entire dataset using "caret" package
   # grid search for tuning parameters: # trees, # predictors considered at each split
-  
+  set.seed(seed)
   trControl = trainControl(method = "cv", number = 10, search ="grid")
   
   fit.rf = train(x = train.x, y = train.y,
