@@ -67,15 +67,9 @@ model_compare = function(train,test,seed = 1){
   # X: Status of ASD
   
   ## LRT for multiple responses to find important predictors
+
   
-  p.value = numeric(0)
-  
-  for (i in 1:ncol(train)) {
-    try(p.value[i] <- LRT1D(as.numeric(as.logical(train.y)),train[,i])$p.value,silent = T)
-  }
-  
-  
-  q.value = p.adjust(p.value,method = "fdr")
+  q.value = LRTnD(as.numeric(as.logical(train.y)),train)$q.value
   
   ## get filter train data 
   
