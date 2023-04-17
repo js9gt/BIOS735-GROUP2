@@ -184,6 +184,7 @@ result = model_compare(train,test)
 
 
 ## generate ROC curve and AUC score
+
 roc(result$status,as.numeric(result$pred.lasso),plot=T,percent = T,legacy.axes = T,
     print.auc = T,col = "#377eb8",
     ylab = "True positive (%)",xlab = "False Positive %",main = "ROC")
