@@ -67,15 +67,9 @@ model_compare = function(train,test,seed = 1){
   # X: Status of ASD
   
   ## LRT for multiple responses to find important predictors
+
   
-  p.value = numeric(0)
-  
-  for (i in 1:ncol(train)) {
-    try(p.value[i] <- LRT1D(as.numeric(as.logical(train.y)),train[,i])$p.value,silent = T)
-  }
-  
-  
-  q.value = p.adjust(p.value,method = "fdr")
+  q.value = LRTnD(as.numeric(as.logical(train.y)),train)$q.value
   
   ## get filter train data 
   
@@ -92,7 +86,7 @@ model_compare = function(train,test,seed = 1){
   # wrap in 10 fold CV
   # random forest with entire dataset using "caret" package
   # grid search for tuning parameters: # trees, # predictors considered at each split
-  
+  set.seed(seed)
   trControl = trainControl(method = "cv", number = 10, search ="grid")
   
   fit.rf = train(x = train.x, y = train.y,
