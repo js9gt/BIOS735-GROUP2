@@ -67,13 +67,13 @@ However, the model we are implementing makes use of the abundance counts through
 
 # Methods
 
-We observe counts in our dataset which would typically be modeled through poisson regression. However, due to the large number of zeros, we use zero-inflated negative binomial regression instead. This dataset is high dimensional, as the number of OTUs (taxa consisting of "similar" species) exceeds the number of subjects from which data was collected from. 
+For our data set, the response observed are counts, many of which are zero counts. Furthermore, the data set is high dimensional, as the number of OTUs (taxa consisting of "similar" species) exceeds the number of subjects from which data was collected. To counteract the high dimensionality of the data, the first step in our approach is to identify OTUs with significant differential abundance using a zero-inflated negative binomial model that can take into account the numerous zeros observed. In the second step, we include the OTUs in a logistic regression model to classify participants as individuals with or without ASD. In our third step, we will use random forest to also classify participants as individuals with or without ASD. Finally, we compare the two approaches to classifying participants in our fourth step.
 
-The first step in the process is to identify the OTUs with significantly differential abundance to include in the logistic regression model in step 2. The idea is, that since we have so many different variable species, we essentially want to perform variable selection to identify the most significant OTUs to include in our model. 
+In the sections below, we describe in detail our model and methods.
 
 ## Step 1: Find differential abundance species using the zero inflated negative binomial (ZINB) model
 
-### Model Specification
+### Probability Distribution Functions (PDFs)
 
 PDF of Negative Binomial distribution with mean parameter $\mu_{i,g}$ and dispersion parameter $\theta_g$:
 
@@ -81,9 +81,8 @@ PDF of Negative Binomial distribution with mean parameter $\mu_{i,g}$ and disper
 f\left(Y_{i , g} =y_{i,g}\mid u_ {i, g}, \theta_ g\right)=\frac{\Gamma\left(y_{i,g}+\theta_g^{-1}\right)}{y_{i,g} !\Gamma\left(\theta_g^{-1}\right)}\left(\frac{\theta_ g \mu _{i , g}}{1+\theta_ g \mu _{i , g}}\right)^{y_{i,g}}\left(\frac{1}{1+\theta_ g \mu _{i , g}}\right)^{\theta_g^{-1}}
 \end{equation}
 
-Suppose $Y_{i, g} \sim Z I N B\left(\mu_{i, g}, \theta_g, \pi_{i, g}\right)$, 
 
-### Likelihood
+Suppose $Y_{i, g} \sim Z I N B\left(\mu_{i, g}, \theta_g, \pi_{i, g}\right)$, 
 
 \begin{equation}
 \resizebox{.92\hsize}{!}{$f\left(Y_{i , g} =y_{i,g}\mid u_ {i, g}, \theta_ g, \pi_{i,g}\right)=
@@ -99,6 +98,8 @@ The indicator exponents mark which parts belong to or don't belong to the zero-i
 \left[(1-\pi_{i,g})\frac{\Gamma\left(y_{i,g}+\theta_g^{-1}\right)}{y_{i,g} !\Gamma\left(\theta_g^{-1}\right)}\left(\frac{\theta_ g \mu _{i , g}}{1+\theta_ g \mu _{i , g}}\right)^{y_{i,g}}\left(\frac{1}{1+\theta_ g \mu _{i , g}}\right)^{\theta_g^{-1}}\right]^{I(y_{i,g}>0)\cdot (1-z_{i,g})}$}
 \end{equation}
 
+### Complete Data Likelihood (CDL)
+
 For the $g$th species, the CDL can be written as 
 
 \begin{equation}
@@ -106,6 +107,90 @@ For the $g$th species, the CDL can be written as
 \end{equation}
 
 Since we now have the complete data likelihood, we just need to take the log of it to obtain the log-likelihood to be used in the EM algorithm. Therefore, we can use the EM algorithm to find the MLE for the $g$th OTU.
+
+### EM Algorithm
+
+#### E-Step
+
+Let 
+\begin{itemize}
+    \item $l_{c,g}$ denote the $g^{th}$ OTU's complete data log-likelihood (CDLL)
+    \item $\zeta_{i,g} = (\mu_{i,g}, \pi_{i,g})$
+    \item $\zeta_{g} = (\mu_{1,g}, \pi_{1,g}, \mu_{2,g}, \pi_{2,g},..., \mu{n,g}, \pi{n,g})$
+\end{itemize}
+
+\noindent We want to compute
+
+\begin{center}
+\begin{math}
+    E[l_{c,g}|\zeta_{g}^{k}, Y_{g}] = \sum_{i=1}^{n} E[l_{c(i,g)}|\zeta_{i,g}^{k}, Y_{i,g}] = \sum_{i=1}^{n} E[z_{i,g}|\zeta_{i,g}^{k}, Y_{i,g}],
+\end{math}
+\end{center} so we begin by solving $E[z_{i,g}|\zeta_{i,g}^{k}, Y_{i,g}]$ and obtaining
+
+\begin{equation} \label{estep}
+     E[z_{i,g}|\zeta_{i,g}^{k}, Y_{i,g}] = P(z_{i,g} = 1 | \zeta_{i,g}^{k}, Y_{i,g}) = \frac{\pi_{i,g}^{k}}{\pi_{i,g}^{k} + (1 - \pi_{i,g}^{k})(\frac{1}{1 + \theta_{g}^{k}\mu_{i,g}^{k}})^{\theta_{g}^{-(k)}}}I(y_{i,g}=0) \tag{$*$}
+\end{equation}
+
+\noindent Using equation \eqref{estep}, we can calculate
+
+\begin{center}
+\begin{math}
+    E[l_{c,g}|\zeta_{g}^{k}, Y_{g}] = \sum_{i=1}^{n} E[l_{c(i,g)}|\zeta_{i,g}^{k}, Y_{i,g}]
+\end{math}
+\end{center}
+
+#### M-Step
+
+To optimize $E[l_{c,g}|\zeta_{g}^{k}, Y_{g}]$ with respect to $\beta$, $\gamma$, and $\theta$ we implement Newton-Raphson's algorithm. Hence, the derivation of the score function and Fisher's information matrix is necessary. 
+
+\noindent **Score Function:** We derive the score function by solving the following:
+
+\begin{itemize}
+    \item $\frac{\partial l_{c,(i,g)}}{\partial \beta_{g}} = \frac{\partial l_{c,(i,g)}}{\partial \mu_{i,g}} \frac{\partial \mu_{i,g}}{\partial \beta_{g}}$,
+
+    \item $\frac{\partial l_{c,(i,g)}}{\partial \gamma_{g}} = \frac{\partial l_{c,(i,g)}}{\partial \pi_{i,g}} \frac{\partial \pi_{i,g}}{\partial \gamma_{g}}$, and
+
+    \item $\frac{\partial l_{c,(i,g)}}{\partial \theta_{g}}$
+\end{itemize}
+
+\noindent Let $S(\beta_{g}^{k}, \gamma_{g}^{k}, \theta_{g}^{k})$ be the score function for the current iteration $k$. 
+
+\noindent **Fisher Information Matrix:** We derive the fisher information matrix by solving the following:
+
+\begin{itemize}
+    \item $\frac{\partial^{2} l_{c,(i,g)}}{\partial \beta_{g}\beta_{g}^{T}}$,
+    \item $\frac{\partial^{2} l_{c,(i,g)}}{\partial \beta_{g}\gamma_{g}}$,      
+    \item $\frac{\partial^{2} l_{c,(i,g)}}{\partial \beta_{g}\theta_{g}}$,  
+    \item $\frac{\partial^{2} l_{c,(i,g)}}{\partial \gamma_{g}\gamma_{g}^{T}}$,
+    \item $\frac{\partial^{2} l_{c,(i,g)}}{\partial \gamma_{g}\beta_{g}}$,
+    \item $\frac{\partial^{2} l_{c,(i,g)}}{\partial \gamma_{g}\theta_{g}}$, and  
+    \item $\frac{\partial^{2} l_{c,(i,g)}}{\partial \theta_{g}^{2}}$
+\end{itemize}
+
+\noindent Let $I_{n}(\beta_{g}^{k}, \gamma_{g}^{k}, \theta_{g}^{k})$ be the fisher information matrix for the current iteration $k$.
+
+\noindent We update $\beta_{g}^{k}$, $\gamma_{g}^{k}$, and $\theta_{g}^{k}$ by solving the following:
+
+\begin{equation} \label{nrformula}
+(\beta_{g}^{k}, \gamma_{g}^{k}, \theta_{g}^{k})^{T} = (\beta_{g}^{k}, \gamma_{g}^{k}, \theta_{g}^{k})^{T} + [I_{n}(\beta_{g}^{k}, \gamma_{g}^{k}, \theta_{g}^{k})]^{-1}S(\beta_{g}^{k}, \gamma_{g}^{k}, \theta_{g}^{k}) \tag{$**$}
+\end{equation}
+
+\noindent The following steps summarize the EM algorithm:
+
+\begin{enumerate}
+    \item Initialize $\beta_{g}^{0}$, $\gamma_{g}^{0}$, and $\theta_{g}^{0}$
+\end{enumerate}
+
+\noindent For the $k^{th}$ iteration
+
+\begin{enumerate} \setcounter{enumi}{1}
+    \item E-step: Calculate equation $E[l_{c,g}|\beta_{g}^{k}, \gamma_{g}^{k}, \theta_{g}^{k}, Y_{g}]$
+    \item M-step: Calculate the score function and fisher information matrix to solve equation \eqref{nrformula}. 
+\end{enumerate}
+
+\noindent Steps 2 and 3 are repeated until convergence. 
+
+### Likelihood Ratio Test
 
 In order to test the differential abundance status, we need to model $\log(\mu_{i,g})=X_i^{\top} \beta_g$, where $\beta_g=(\beta^{(Intercept)}_g, \beta^{D}_g)^{\top}$, $\text{logit} (\pi_{i,g})=X_i^{\top} \gamma_g$, where $\gamma_g=(\gamma^{(Intercept)}_g, \gamma^{D}_g)^{\top}$.
 
@@ -159,15 +244,14 @@ As a preface, while the original model intention was written as above, there wer
 
 ```{r}
 ## Loading Package
-library(ZINB)
 library(Rcpp)
 library(dplyr)
+library(ZINB)
 library(caret)
 library(glmnet)
 library(pROC)
 
-## load function, which uses the ZINB model, fits the cross validated model, and 
-# compares with random forest
+## load function which trains model and calculates confusion matrix
 source("function.R")
 
 ## read in data
@@ -182,15 +266,14 @@ test = microbiome[-train.num,]
 ## analyze the data
 result = model_compare(train,test)
 
-
 ## generate ROC curve and AUC score
-
-roc(result$status,as.numeric(result$pred.lasso),plot=T,percent = T,legacy.axes = T,
-    print.auc = T,col = "#377eb8",
+roc(result$status,as.numeric(result$pred.lasso),plot=T,percent = T,
+    legacy.axes = T,print.auc = T,col = "#377eb8",
     ylab = "True positive (%)",xlab = "False Positive %",main = "ROC")
-plot.roc(result$status,as.numeric(result$pred.rf),percent = T,add=T,print.auc = T,
-         print.auc.y = 40,col="#4daf4a")
+plot.roc(result$status,as.numeric(result$pred.rf),percent = T,add=T,
+         print.auc = T,print.auc.y = 40,col="#4daf4a")
 legend("bottomright",legend = c("Lasso","Random forest"),col=c("#377eb8","#4daf4a"),lwd=4)
+
 
 ## generate information of confusion matrix
 ## calculate accuracy, specificity, sensitivity metrics for both model
@@ -204,7 +287,10 @@ result$pred.rf  = relevel(result$pred.rf,"TRUE")
 cm.lasso <- confusionMatrix(data = result$pred.lasso, reference = result$status)
 cm.rf <- confusionMatrix(data = result$pred.rf, reference = result$status)
 
+# Confusion matrix for penalized logistic
 draw_confusion_matrix(cm.lasso,title = "Lasso")
+
+# Confusion matrix for random forest
 draw_confusion_matrix(cm.rf,title = "Random Forest")
 ```
 
@@ -225,5 +311,4 @@ In summary, we found that all measurements of performance (accuracy, sensitivity
 As an extension of our approach in order to use the model as intended, we may consider merging OTUs by taxonomy to create higher order clades and therefore fewer OTUs to be used as predictors. This may solve the instability we saw in the ZINB model, where if the counts contained too few or too many 0 values, the information was almost singular. However, this does not appear to be a problem specific to our package, as other pre-written packages encounter this issue as well when we compare our results. To eliminate the two step approach, one could consider a ZINB model with a penalty such as LASSO, "smoothly clipped absolute deviation (SCAD), or minimax concave penalty (MCP)" [@wang2015variable].
 
 
-# References (Must be the last section to have bibliography printed after)
-
+# References
