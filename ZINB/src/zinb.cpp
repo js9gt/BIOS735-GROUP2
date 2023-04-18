@@ -140,21 +140,25 @@ List par_EM(const arma::mat& X, const arma::vec& y_k, double tol = 1e-3, int max
   double eps = INFINITY;
   arma::mat I_mat, identity;
 
+  arma::vec pi_k(n), mu_k(n), z_k(n);
+
   // zero inflated model
   if(inflation){
     identity = arma::eye(2 * p + 1, 2 * p + 1);
+    I_mat = arma::eye(2 * p + 1, 2 * p + 1);
+    arma::vec s(2 * p + 1), par_old(2 * p + 1), par_new(2 * p + 1);
     while (iter < maxIter && eps > tol) {
       // E step
-      arma::vec pi_k = c_pi(X, gammak);
-      arma::vec mu_k = c_mu(X, betak);
-      arma::vec z_k = Qik(pi_k, mu_k, y_k, thetak);
+      pi_k = c_pi(X, gammak);
+      mu_k = c_mu(X, betak);
+      z_k = Qik(pi_k, mu_k, y_k, thetak);
 
       // M step using one step Newton-Raphson method
-      arma::vec s = score(X, y_k, z_k, mu_k, pi_k, thetak);
+      s = score(X, y_k, z_k, mu_k, pi_k, thetak);
       I_mat = In(X, y_k, z_k, mu_k, pi_k, gammak, thetak);
 
-      arma::vec par_old = join_vert(join_vert(betak, gammak), arma::vec({log(thetak)}));
-      arma::vec par_new = par_old + arma::solve(I_mat, s, arma::solve_opts::fast + arma::solve_opts::allow_ugly);
+      par_old = join_vert(join_vert(betak, gammak), arma::vec({static_cast<double> (log(thetak))}));
+      par_new = par_old + arma::solve(I_mat, s, arma::solve_opts::fast + arma::solve_opts::allow_ugly);
       eps = sqrt(sum(square(par_old - par_new)));
 
       betak = par_new.subvec(0, p - 1);
@@ -164,8 +168,8 @@ List par_EM(const arma::mat& X, const arma::vec& y_k, double tol = 1e-3, int max
       iter = iter + 1;
     }
     // compute the loglikelihood
-    arma::vec pi_k = c_pi(X, gammak);
-    arma::vec mu_k = c_mu(X, betak);
+    pi_k = c_pi(X, gammak);
+    mu_k = c_mu(X, betak);
     arma::vec p_0 = 1 / (1 + thetak * mu_k);
     arma::vec logprob = log(dznbinom(y_k, 1 / thetak, p_0, pi_k));
     // remove NA and Infs
@@ -174,19 +178,21 @@ List par_EM(const arma::mat& X, const arma::vec& y_k, double tol = 1e-3, int max
   else{
     // this is the given information for the non-inflated model
     identity = arma::eye(p + 1, p + 1);
-    arma::vec pi_k = arma::zeros(n);
-    arma::vec z_k = arma::zeros(n);
+    I_mat = arma::eye(p + 1, p + 1);
+    pi_k = arma::zeros(n);
+    z_k = arma::zeros(n);
+    arma::vec s(2 * p + 1), par_old(2 * p + 1), par_new(2 * p + 1);
     arma::uvec index = arma::join_cols(arma::regspace<arma::uvec>(0, p - 1), arma::uvec({static_cast<unsigned int>(2 * p)}));
 
     // fit a negative binomial regression
     while (iter < maxIter && eps > tol) {
-      arma::vec mu_k = c_mu(X, betak);
+      mu_k = c_mu(X, betak);
       // one step Newton-Raphson method
-      arma::vec s = score(X, y_k, z_k, mu_k, pi_k, thetak)(index);
+      s = score(X, y_k, z_k, mu_k, pi_k, thetak)(index);
       I_mat = In(X, y_k, z_k, mu_k, pi_k, gammak, thetak)(index, index);
 
-      arma::vec par_old = join_vert(betak, arma::vec({log(thetak)}));
-      arma::vec par_new = par_old + arma::solve(I_mat, s, arma::solve_opts::fast + arma::solve_opts::allow_ugly);
+      par_old = join_vert(betak, arma::vec({static_cast<double> (log(thetak))}));
+      par_new = par_old + arma::solve(I_mat, s, arma::solve_opts::fast + arma::solve_opts::allow_ugly);
       eps = sqrt(sum(square(par_old - par_new)));
 
       betak = par_new.subvec(0, p - 1);
@@ -194,7 +200,7 @@ List par_EM(const arma::mat& X, const arma::vec& y_k, double tol = 1e-3, int max
       iter = iter + 1;
     }
     // compute the loglikelihood
-    arma::vec mu_k = c_mu(X, betak);
+    mu_k = c_mu(X, betak);
     arma::vec p_0 = 1 / (1 + thetak * mu_k);
     arma::vec logprob = log(dznbinom(y_k, 1 / thetak, p_0, pi_k));
     // remove NA and Infs
