@@ -159,15 +159,14 @@ As a preface, while the original model intention was written as above, there wer
 
 ```{r}
 ## Loading Package
-library(ZINB)
 library(Rcpp)
 library(dplyr)
+library(ZINB)
 library(caret)
 library(glmnet)
 library(pROC)
 
-## load function, which uses the ZINB model, fits the cross validated model, and 
-# compares with random forest
+## load function which trains model and calculates confusion matrix
 source("function.R")
 
 ## read in data
@@ -182,15 +181,14 @@ test = microbiome[-train.num,]
 ## analyze the data
 result = model_compare(train,test)
 
-
 ## generate ROC curve and AUC score
-
-roc(result$status,as.numeric(result$pred.lasso),plot=T,percent = T,legacy.axes = T,
-    print.auc = T,col = "#377eb8",
+roc(result$status,as.numeric(result$pred.lasso),plot=T,percent = T,
+    legacy.axes = T,print.auc = T,col = "#377eb8",
     ylab = "True positive (%)",xlab = "False Positive %",main = "ROC")
-plot.roc(result$status,as.numeric(result$pred.rf),percent = T,add=T,print.auc = T,
-         print.auc.y = 40,col="#4daf4a")
+plot.roc(result$status,as.numeric(result$pred.rf),percent = T,add=T,
+         print.auc = T,print.auc.y = 40,col="#4daf4a")
 legend("bottomright",legend = c("Lasso","Random forest"),col=c("#377eb8","#4daf4a"),lwd=4)
+
 
 ## generate information of confusion matrix
 ## calculate accuracy, specificity, sensitivity metrics for both model
@@ -204,7 +202,10 @@ result$pred.rf  = relevel(result$pred.rf,"TRUE")
 cm.lasso <- confusionMatrix(data = result$pred.lasso, reference = result$status)
 cm.rf <- confusionMatrix(data = result$pred.rf, reference = result$status)
 
+# Confusion matrix for penalized logistic
 draw_confusion_matrix(cm.lasso,title = "Lasso")
+
+# Confusion matrix for random forest
 draw_confusion_matrix(cm.rf,title = "Random Forest")
 ```
 
@@ -225,5 +226,4 @@ In summary, we found that all measurements of performance (accuracy, sensitivity
 As an extension of our approach in order to use the model as intended, we may consider merging OTUs by taxonomy to create higher order clades and therefore fewer OTUs to be used as predictors. This may solve the instability we saw in the ZINB model, where if the counts contained too few or too many 0 values, the information was almost singular. However, this does not appear to be a problem specific to our package, as other pre-written packages encounter this issue as well when we compare our results. To eliminate the two step approach, one could consider a ZINB model with a penalty such as LASSO, "smoothly clipped absolute deviation (SCAD), or minimax concave penalty (MCP)" [@wang2015variable].
 
 
-# References (Must be the last section to have bibliography printed after)
-
+# References
