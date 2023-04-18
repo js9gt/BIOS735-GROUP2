@@ -242,7 +242,7 @@ Our package, the "ZINB" package includes the following functions:
 
 As a preface, while the original model intention was written as above, there were still too many OTU's selected by the ZINB model for the logistic regression to converge. Thus in our final analysis, we used logistic LASSO regression, which can perform variable selection and thus further reduce the dimensions of our covariates.
 
-```
+```{r}
 ## Loading Package
 library(ZINB)
 library(Rcpp)
