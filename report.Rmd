@@ -124,25 +124,25 @@ Let
 
 \begin{center}
 \begin{math}
-    E[l_{c,g}|\zeta_{g}^{k}, Y_{g}] = \sum_{i=1}^{n} E[l_{c(i,g)}|\zeta_{i,g}^{k}, Y_{i,g}] = \sum_{i=1}^{n} E[z_{i,g}|\zeta_{i,g}^{k}, Y_{i,g}],
+    E[l_{c,g}|\zeta_{g}^{(k)}, Y_{g}] = \sum_{i=1}^{n} E[l_{c(i,g)}|\zeta_{i,g}^{(k)}, Y_{i,g}] = \sum_{i=1}^{n} E[z_{i,g}|\zeta_{i,g}^{(k)}, Y_{i,g}],
 \end{math}
-\end{center} so we begin by solving $E[z_{i,g}|\zeta_{i,g}^{k}, Y_{i,g}]$ and obtaining
+\end{center} so we begin by solving $E[z_{i,g}|\zeta_{i,g}^{(k)}, Y_{i,g}]$ and obtaining
 
 \begin{equation} \label{estep}
-     E[z_{i,g}|\zeta_{i,g}^{k}, Y_{i,g}] = P(z_{i,g} = 1 | \zeta_{i,g}^{k}, Y_{i,g}) = \frac{\pi_{i,g}^{k}}{\pi_{i,g}^{k} + (1 - \pi_{i,g}^{k})(\frac{1}{1 + \theta_{g}^{k}\mu_{i,g}^{k}})^{\theta_{g}^{-(k)}}}I(y_{i,g}=0) \tag{i}
+     E[z_{i,g}|\zeta_{i,g}^{(k)}, Y_{i,g}] = P(z_{i,g} = 1 | \zeta_{i,g}^{(k)}, Y_{i,g}) = \frac{\pi_{i,g}^{(k)}}{\pi_{i,g}^{(k)} + (1 - \pi_{i,g}^{(k)})(\frac{1}{1 + \theta_{g}^{(k)}\mu_{i,g}^{(k)}})^{\theta_{g}^{-(k)}}}I(y_{i,g}=0) \tag{i}
 \end{equation}
 
 \noindent Using equation \eqref{estep}, we can calculate
 
 \begin{center}
 \begin{math}
-    E[l_{c,g}|\zeta_{g}^{k}, Y_{g}] = \sum_{i=1}^{n} E[l_{c(i,g)}|\zeta_{i,g}^{k}, Y_{i,g}]
+    E[l_{c,g}|\zeta_{g}^{(k)}, Y_{g}] = \sum_{i=1}^{n} E[l_{c(i,g)}|\zeta_{i,g}^{(k)}, Y_{i,g}]
 \end{math}
 \end{center}
 
 #### M-Step
 
-To optimize $E[l_{c,g}|\zeta_{g}^{k}, Y_{g}]$ with respect to $\beta$, $\gamma$, and $\theta$ we implement Newton-Raphson's algorithm. Hence, the derivation of the score function and Fisher's information matrix is necessary. 
+To optimize $E[l_{c,g}|\zeta_{g}^{(k)}, Y_{g}]$ with respect to $\beta^{(k)}$, $\gamma^{(k)}$, and $\theta^{(k)}$ we implement Newton-Raphson's algorithm. Hence, the derivation of the score function and Fisher's information matrix is necessary. 
 
 \noindent **Score Function:** We derive the score function by solving the following:
 
@@ -188,7 +188,7 @@ z_{n,g} - \pi_{n,g}^{(k)}
     \item $-E\bigr[\frac{\partial^{2} l_{c,(i,g)}}{\partial \beta_{g}\beta_{g}^{\mathsf{T}}}\bigr] = X^{\mathsf{T}}P_{1}(\beta_{g}^{(k)}, \gamma_{g}^{(k)}, \theta_{g}^{(k)})X$, where $P_{1}(\beta_{g}^{(k)}, \gamma_{g}^{(k)}, \theta_{g}^{(k)})=\textnormal{diag}\bigl\{\frac{(1 - z_{i,g})\exp(x_{i}^{\mathsf{T}}\beta_{g}^{(k)})}{1 + \theta_{g} \exp(x_{i}^{\mathsf{T}} \beta_{g}^{(k)})}\bigl\}$
     \item $-E\bigr[\frac{\partial^{2} l_{c,(i,g)}}{\partial \beta_{g}\gamma_{g}}\bigr] = 0$,      
     \item $-E\bigr[\frac{\partial^{2} l_{c,(i,g)}}{\partial \beta_{g}\theta_{g}}\bigr] = 0$,  
-    \item $-E\bigr[\frac{\partial^{2} l_{c,(i,g)}}{\partial \gamma_{g}\gamma_{g}^{\mathsf{T}}}\bigr] = X^{\mathsf{T}}P_{1}(\beta_{g}^{(k)}, \gamma_{g}^{(k)}, \theta_{g}^{(k)})X$, where $P_{2}(\beta_{g}^{(k)}, \gamma_{g}^{(k)}, \theta_{g}^{(k)}) = \textnormal{diag}\bigl\{\frac{(\exp(x_{i}^{\mathsf{T}}\gamma_{g}^{(k)})}{1 + \theta_{g} \exp(x_{i}^{\mathsf{T}} \gamma_{g}^{(k)})^{2}}\bigl\}$,
+    \item $-E\bigr[\frac{\partial^{2} l_{c,(i,g)}}{\partial \gamma_{g}\gamma_{g}^{\mathsf{T}}}\bigr] = X^{\mathsf{T}}P_{2}(\beta_{g}^{(k)}, \gamma_{g}^{(k)}, \theta_{g}^{(k)})X$, where $P_{2}(\beta_{g}^{(k)}, \gamma_{g}^{(k)}, \theta_{g}^{(k)}) = \textnormal{diag}\bigl\{\frac{(\exp(x_{i}^{\mathsf{T}}\gamma_{g}^{(k)})}{1 + \theta_{g} \exp(x_{i}^{\mathsf{T}} \gamma_{g}^{(k)})^{2}}\bigl\}$,
     \item $-E\bigr[\frac{\partial^{2} l_{c,(i,g)}}{\partial \gamma_{g}\beta_{g}}\bigr] = 0$,
     \item $-E\bigr[\frac{\partial^{2} l_{c,(i,g)}}{\partial \gamma_{g}\theta_{g}}\bigr] = 0$, and  
     \item $-E\bigr[\frac{\partial^{2} l_{c,(i,g)}}{\partial \theta_{g}^{2}}\bigr] \approx (1 - z_{i,g})\theta_{g}^{-4}(2\theta_{g}\psi(\theta_{g}^{-1}) - 2\theta_{g}\psi(y_(i,g) + \theta_{g}^{-1}) + 2\theta_{g}(1 + \theta_{g}\mu_{i,g}) + \psi'(\theta_{g}^{-1}) - \psi'(y_{i,g} + \theta_{g}^{-1} - 2\theta^{2}_{g}(\frac{\mu_{i,g}}{1 + \theta_{g}\mu_{i,g}})] $
@@ -205,16 +205,16 @@ I_{n}(\beta_{g}^{(k)}, \gamma_{g}^{(k)}, \theta_{g}^{(k)}) \\ =
 \end{bmatrix} \tag{iii}
 \end{flalign*}
 
-\noindent We update $\beta_{g}^{k}$, $\gamma_{g}^{k}$, and $\theta_{g}^{k}$ by solving the following:
+\noindent We update $\beta_{g}^{(k)}$, $\gamma_{g}^{(k)}$, and $\theta_{g}^{(k)}$ by solving the following:
 
 \begin{equation} \label{nrformula}
-(\beta_{g}^{k}, \gamma_{g}^{k}, \theta_{g}^{k})^{T} = (\beta_{g}^{k}, \gamma_{g}^{k}, \theta_{g}^{k})^{T} + [I_{n}(\beta_{g}^{k}, \gamma_{g}^{k}, \theta_{g}^{k})]^{-1}S(\beta_{g}^{k}, \gamma_{g}^{k}, \theta_{g}^{k}) \tag{iv}
+(\beta_{g}^{(k+1)}, \gamma_{g}^{(k+1)}, \theta_{g}^{(k+1)})^{T} = (\beta_{g}^{(k)}, \gamma_{g}^{(k)}, \theta_{g}^{(k)})^{T} + [I_{n}(\beta_{g}^{(k)}, \gamma_{g}^{(k)}, \theta_{g}^{(k)})]^{-1}S(\beta_{g}^{(k)}, \gamma_{g}^{(k)}, \theta_{g}^{(k)}) \tag{iv}
 \end{equation}
 
 \noindent The following steps summarize the EM algorithm:
 
 \begin{enumerate}
-    \item Initialize $\beta_{g}^{0}$, $\gamma_{g}^{0}$, and $\theta_{g}^{0}$
+    \item Initialize $\beta_{g}^{(0)}$, $\gamma_{g}^{(0)}$, and $\theta_{g}^{(0)}$
 \end{enumerate}
 
 \noindent For the $k^{th}$ iteration
