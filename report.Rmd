@@ -6,6 +6,7 @@ output:
   pdf_document:
     includes:
       in_header: Report/header.tex
+  word_document: default
 bibliography: Report/references.bib
 header-includes: \setlength\parindent{24pt}
 ---
@@ -128,7 +129,7 @@ Let
 \end{center} so we begin by solving $E[z_{i,g}|\zeta_{i,g}^{k}, Y_{i,g}]$ and obtaining
 
 \begin{equation} \label{estep}
-     E[z_{i,g}|\zeta_{i,g}^{k}, Y_{i,g}] = P(z_{i,g} = 1 | \zeta_{i,g}^{k}, Y_{i,g}) = \frac{\pi_{i,g}^{k}}{\pi_{i,g}^{k} + (1 - \pi_{i,g}^{k})(\frac{1}{1 + \theta_{g}^{k}\mu_{i,g}^{k}})^{\theta_{g}^{-(k)}}}I(y_{i,g}=0) \tag{$*$}
+     E[z_{i,g}|\zeta_{i,g}^{k}, Y_{i,g}] = P(z_{i,g} = 1 | \zeta_{i,g}^{k}, Y_{i,g}) = \frac{\pi_{i,g}^{k}}{\pi_{i,g}^{k} + (1 - \pi_{i,g}^{k})(\frac{1}{1 + \theta_{g}^{k}\mu_{i,g}^{k}})^{\theta_{g}^{-(k)}}}I(y_{i,g}=0) \tag{i}
 \end{equation}
 
 \noindent Using equation \eqref{estep}, we can calculate
@@ -146,33 +147,68 @@ To optimize $E[l_{c,g}|\zeta_{g}^{k}, Y_{g}]$ with respect to $\beta$, $\gamma$,
 \noindent **Score Function:** We derive the score function by solving the following:
 
 \begin{itemize}
-    \item $\frac{\partial l_{c,(i,g)}}{\partial \beta_{g}} = \frac{\partial l_{c,(i,g)}}{\partial \mu_{i,g}} \frac{\partial \mu_{i,g}}{\partial \beta_{g}}$,
+    \item $\frac{\partial l_{c,(i,g)}}{\partial \beta_{g}} = \frac{\partial l_{c,(i,g)}}{\partial \mu_{i,g}} \frac{\partial \mu_{i,g}}{\partial \beta_{g}} = \frac{1-z_{i,g}}{(1 + \theta_{g}\mu_{i,g})\mu_{i,g}}(y_{i,g}-\mu_{i,g})\exp(x_{i}^{\mathsf{T}}\beta_{g})x_{i}$,
 
-    \item $\frac{\partial l_{c,(i,g)}}{\partial \gamma_{g}} = \frac{\partial l_{c,(i,g)}}{\partial \pi_{i,g}} \frac{\partial \pi_{i,g}}{\partial \gamma_{g}}$, and
+    \item $\frac{\partial l_{c,(i,g)}}{\partial \gamma_{g}} = \frac{\partial l_{c,(i,g)}}{\partial \pi_{i,g}} \frac{\partial \pi_{i,g}}{\partial \gamma_{g}} = \frac{z_{i,g} - \pi_{i,g}}{\pi_{i,g}(1 + \pi_{i,g})} \frac{\exp(x_{i}^{\mathsf{t}}\gamma_{g})}{(1 + \exp(x_{i}^{\mathsf{t}}\gamma_{g}) }$, and
 
-    \item $\frac{\partial l_{c,(i,g)}}{\partial \theta_{g}}$
+    \item $\frac{\partial l_{c,(i,g)}}{\partial \theta_{g}} = (1 - z_{i,g})\theta_{g}^{-2}{\psi(\theta_{g}^{-1}) + \psi(y_{i,g} + \theta_{g}^{-1}) + \log(1 + \theta_{g}\mu_{i,g})} + \frac{1}{\theta_{g}(1+\theta_{g}\mu_{i,g})(y_{i,g} - \mu_{i,g})}$, where $\psi(\alpha)=\frac{\Gamma'(\alpha)}{\Gamma(\alpha)}$
 \end{itemize}
 
-\noindent Let $S(\beta_{g}^{k}, \gamma_{g}^{k}, \theta_{g}^{k})$ be the score function for the current iteration $k$. 
+\noindent Let $S(\beta_{g}^{(k)}, \gamma_{g}^{(k)}, \theta_{g}^{(k)})$ be the score function for the current iteration $k$.
+
+\begin{equation} \label{scorefunction}
+S(\beta_{g}^{(k)}, \gamma_{g}^{(k)}, \theta_{g}^{(k)}) = 
+\begin{bmatrix} 
+    X^{\mathsf{T}}V(\beta_{g}^{(k)}, \gamma_{g}^{(k)}, \theta_{g}^{(k)}e_{1}(\beta_{g}^{(k)}, \gamma_{g}^{(k)}, \theta_{g}^{(k)}) \\
+    X^{\mathsf{T}}e_{2}(\beta_{g}^{(k)}, \gamma_{g}^{(k)}, \theta_{g}^{(k)}) \\
+    \frac{\partial l_{c}}{\partial \theta_{g}}|_{\beta_{g}^{(k)}, \gamma_{g}^{(k)}, \theta_{g}^{(k)}}
+\end{bmatrix}, \tag{ii}
+\end{equation} \\
+
+\noindent where \begin{math}
+e_{1}(\beta_{g}^{(k)}, \gamma_{g}^{(k)}, \theta_{g}^{(k)}) = 
+\begin{bmatrix}
+(1 - z_{1,g})(y_{1,g} - \mu_{1,g}^{(k)}) \\
+(1 - z_{2,g})(y_{2,g} - \mu_{2,g}^{(k)}) \\
+\vdots                            \\
+(1 - z_{n,g})(y_{n,g} - \mu_{n,g}^{(k)})
+\end{bmatrix}\end{math}, \begin{math} e_{2}(\beta_{g}^{(k)}, \gamma_{g}^{(k)}, \theta_{g}^{(k)}) =
+\begin{bmatrix}
+z_{1,g} - \pi_{1,g}^{(k)} \\
+z_{2,g} - \pi_{2,g}^{(k)} \\
+\vdots                \\
+z_{n,g} - \pi_{n,g}^{(k)}
+\end{bmatrix}\end{math}, and \begin{math}
+\textnormal{V}(\beta_{g}^{(k)}, \gamma_{g}^{(k)}, \theta_{g}^{(k)}) = \textnormal{diag}\bigl\{\frac{1}{1+\theta_{g}\exp(x_{i}^{\mathsf{T}}\beta_{g}^{(k)})}\bigl\}
+\end{math}.
 
 \noindent **Fisher Information Matrix:** We derive the fisher information matrix by solving the following:
 
 \begin{itemize}
-    \item $\frac{\partial^{2} l_{c,(i,g)}}{\partial \beta_{g}\beta_{g}^{T}}$,
-    \item $\frac{\partial^{2} l_{c,(i,g)}}{\partial \beta_{g}\gamma_{g}}$,      
-    \item $\frac{\partial^{2} l_{c,(i,g)}}{\partial \beta_{g}\theta_{g}}$,  
-    \item $\frac{\partial^{2} l_{c,(i,g)}}{\partial \gamma_{g}\gamma_{g}^{T}}$,
-    \item $\frac{\partial^{2} l_{c,(i,g)}}{\partial \gamma_{g}\beta_{g}}$,
-    \item $\frac{\partial^{2} l_{c,(i,g)}}{\partial \gamma_{g}\theta_{g}}$, and  
-    \item $\frac{\partial^{2} l_{c,(i,g)}}{\partial \theta_{g}^{2}}$
+    \item $-E\bigr[\frac{\partial^{2} l_{c,(i,g)}}{\partial \beta_{g}\beta_{g}^{\mathsf{T}}}\bigr] = X^{\mathsf{T}}P_{1}(\beta_{g}^{(k)}, \gamma_{g}^{(k)}, \theta_{g}^{(k)})X$, where $P_{1}(\beta_{g}^{(k)}, \gamma_{g}^{(k)}, \theta_{g}^{(k)})=\textnormal{diag}\bigl\{\frac{(1 - z_{i,g})\exp(x_{i}^{\mathsf{T}}\beta_{g}^{(k)})}{1 + \theta_{g} \exp(x_{i}^{\mathsf{T}} \beta_{g}^{(k)})}\bigl\}$
+    \item $-E\bigr[\frac{\partial^{2} l_{c,(i,g)}}{\partial \beta_{g}\gamma_{g}}\bigr] = 0$,      
+    \item $-E\bigr[\frac{\partial^{2} l_{c,(i,g)}}{\partial \beta_{g}\theta_{g}}\bigr] = 0$,  
+    \item $-E\bigr[\frac{\partial^{2} l_{c,(i,g)}}{\partial \gamma_{g}\gamma_{g}^{\mathsf{T}}}\bigr] = X^{\mathsf{T}}P_{1}(\beta_{g}^{(k)}, \gamma_{g}^{(k)}, \theta_{g}^{(k)})X$, where $P_{2}(\beta_{g}^{(k)}, \gamma_{g}^{(k)}, \theta_{g}^{(k)}) = \textnormal{diag}\bigl\{\frac{(\exp(x_{i}^{\mathsf{T}}\gamma_{g}^{(k)})}{1 + \theta_{g} \exp(x_{i}^{\mathsf{T}} \gamma_{g}^{(k)})^{2}}\bigl\}$,
+    \item $-E\bigr[\frac{\partial^{2} l_{c,(i,g)}}{\partial \gamma_{g}\beta_{g}}\bigr] = 0$,
+    \item $-E\bigr[\frac{\partial^{2} l_{c,(i,g)}}{\partial \gamma_{g}\theta_{g}}\bigr] = 0$, and  
+    \item $-E\bigr[\frac{\partial^{2} l_{c,(i,g)}}{\partial \theta_{g}^{2}}\bigr] \approx (1 - z_{i,g})\theta_{g}^{-4}(2\theta_{g}\psi(\theta_{g}^{-1}) - 2\theta_{g}\psi(y_(i,g) + \theta_{g}^{-1}) + 2\theta_{g}(1 + \theta_{g}\mu_{i,g}) + \psi'(\theta_{g}^{-1}) - \psi'(y_{i,g} + \theta_{g}^{-1} - 2\theta^{2}_{g}(\frac{\mu_{i,g}}{1 + \theta_{g}\mu_{i,g}})] $
 \end{itemize}
 
-\noindent Let $I_{n}(\beta_{g}^{k}, \gamma_{g}^{k}, \theta_{g}^{k})$ be the fisher information matrix for the current iteration $k$.
+\noindent Let $I_{n}(\beta_{g}^{(k)}, \gamma_{g}^{(k)}, \theta_{g}^{(k)})$ be the fisher information matrix for the current iteration $k$.
+
+\begin{flalign*} \label{fisherinformation}
+I_{n}(\beta_{g}^{(k)}, \gamma_{g}^{(k)}, \theta_{g}^{(k)}) \\ = 
+\begin{bmatrix}
+    X^{\mathsf{T}}P_{1}(\beta_{g}^{(k)}, \gamma_{g}^{(k)}, \theta_{g}^{(k)})X & &  \\ 
+     & X^{\mathsf{T}}P_{2}(\beta_{g}^{(k)}, \gamma_{g}^{(k)}, \theta_{g}^{(k)})X &  \\
+     & & \frac{\partial^{2} l_{c}}{\partial \theta_{g}^{2}} \rvert_{\beta_{g}^{(k)}, \gamma_{g}^{(k)}, \theta_{g}^{(k)}}
+\end{bmatrix} \tag{iii}
+\end{flalign*}
 
 \noindent We update $\beta_{g}^{k}$, $\gamma_{g}^{k}$, and $\theta_{g}^{k}$ by solving the following:
 
 \begin{equation} \label{nrformula}
-(\beta_{g}^{k}, \gamma_{g}^{k}, \theta_{g}^{k})^{T} = (\beta_{g}^{k}, \gamma_{g}^{k}, \theta_{g}^{k})^{T} + [I_{n}(\beta_{g}^{k}, \gamma_{g}^{k}, \theta_{g}^{k})]^{-1}S(\beta_{g}^{k}, \gamma_{g}^{k}, \theta_{g}^{k}) \tag{$**$}
+(\beta_{g}^{k}, \gamma_{g}^{k}, \theta_{g}^{k})^{T} = (\beta_{g}^{k}, \gamma_{g}^{k}, \theta_{g}^{k})^{T} + [I_{n}(\beta_{g}^{k}, \gamma_{g}^{k}, \theta_{g}^{k})]^{-1}S(\beta_{g}^{k}, \gamma_{g}^{k}, \theta_{g}^{k}) \tag{iv}
 \end{equation}
 
 \noindent The following steps summarize the EM algorithm:
@@ -184,7 +220,7 @@ To optimize $E[l_{c,g}|\zeta_{g}^{k}, Y_{g}]$ with respect to $\beta$, $\gamma$,
 \noindent For the $k^{th}$ iteration
 
 \begin{enumerate} \setcounter{enumi}{1}
-    \item E-step: Calculate equation $E[l_{c,g}|\beta_{g}^{k}, \gamma_{g}^{k}, \theta_{g}^{k}, Y_{g}]$
+    \item E-step: Calculate equation $E[l_{c,g}|\beta_{g}^{(k)}, \gamma_{g}^{(k)}, \theta_{g}^{(k)}, Y_{g}]$
     \item M-step: Calculate the score function and fisher information matrix to solve equation \eqref{nrformula}. 
 \end{enumerate}
 
@@ -242,8 +278,9 @@ Our package, the "ZINB" package includes the following functions:
 
 As a preface, while the original model intention was written as above, there were still too many OTU's selected by the ZINB model for the logistic regression to converge. Thus in our final analysis, we used logistic LASSO regression, which can perform variable selection and thus further reduce the dimensions of our covariates.
 
-```{r}
+```
 ## Loading Package
+library(devtools)
 library(Rcpp)
 library(dplyr)
 library(ZINB)
