@@ -251,7 +251,7 @@ library(caret)
 library(glmnet)
 library(pROC)
 
-## load function which trains model and calculates confusion matrix
+## load function which trains model and calculates model performance metrics
 source("function.R")
 
 ## read in data
@@ -270,10 +270,10 @@ result = model_compare(train,test)
 roc(result$status,as.numeric(result$pred.lasso),plot=T,percent = T,
     legacy.axes = T,print.auc = T,col = "#377eb8",
     ylab = "True positive (%)",xlab = "False Positive %",main = "ROC")
-plot.roc(result$status,as.numeric(result$pred.rf),percent = T,add=T,
-         print.auc = T,print.auc.y = 40,col="#4daf4a")
-legend("bottomright",legend = c("Lasso","Random forest"),col=c("#377eb8","#4daf4a"),lwd=4)
-
+plot.roc(result$status,as.numeric(result$pred.rf),percent = T,
+         add=T,print.auc = T,print.auc.y = 40,col="#4daf4a")
+legend("bottomright",legend = c("Lasso","Random forest"),
+       col=c("#377eb8","#4daf4a"),lwd=4)
 
 ## generate information of confusion matrix
 ## calculate accuracy, specificity, sensitivity metrics for both model
