@@ -144,7 +144,7 @@ Let
 
 To optimize $E[l_{c,g}|\zeta_{g}^{(k)}, Y_{g}]$ with respect to $\beta^{(k)}$, $\gamma^{(k)}$, and $\theta^{(k)}$ we implement Newton-Raphson's algorithm. Hence, the derivation of the score function and Fisher's information matrix is necessary. 
 
-\noindent **Score Function:** We derive the score function by solving the following:
+\noindent  \textbf{Score Function:} We derive the score function by solving the following:
 
 \begin{itemize}
     \item $\frac{\partial l_{c,(i,g)}}{\partial \beta_{g}} = \frac{\partial l_{c,(i,g)}}{\partial \mu_{i,g}} \frac{\partial \mu_{i,g}}{\partial \beta_{g}} = \frac{1-z_{i,g}}{(1 + \theta_{g}\mu_{i,g})\mu_{i,g}}(y_{i,g}-\mu_{i,g})\exp(x_{i}^{\mathsf{T}}\beta_{g})x_{i}$,
@@ -182,7 +182,7 @@ z_{n,g} - \pi_{n,g}^{(k)}
 \textnormal{V}(\beta_{g}^{(k)}, \gamma_{g}^{(k)}, \theta_{g}^{(k)}) = \textnormal{diag}\bigl\{\frac{1}{1+\theta_{g}\exp(x_{i}^{\mathsf{T}}\beta_{g}^{(k)})}\bigl\}
 \end{math}.
 
-\noindent **Fisher Information Matrix:** We derive the fisher information matrix by solving the following:
+\noindent \textbf{Fisher Information Matrix:} We derive the fisher information matrix by solving the following:
 
 \begin{itemize}
     \item $-E\bigr[\frac{\partial^{2} l_{c,(i,g)}}{\partial \beta_{g}\beta_{g}^{\mathsf{T}}}\bigr] = X^{\mathsf{T}}P_{1}(\beta_{g}^{(k)}, \gamma_{g}^{(k)}, \theta_{g}^{(k)})X$, where $P_{1}(\beta_{g}^{(k)}, \gamma_{g}^{(k)}, \theta_{g}^{(k)})=\textnormal{diag}\bigl\{\frac{(1 - z_{i,g})\exp(x_{i}^{\mathsf{T}}\beta_{g}^{(k)})}{1 + \theta_{g} \exp(x_{i}^{\mathsf{T}} \beta_{g}^{(k)})}\bigl\}$
@@ -276,7 +276,7 @@ Our package, the "ZINB" package includes the following functions:
 
 # Results
 
-As a preface, while the original model intention was written as above, there were still too many OTU's selected by the ZINB model for the logistic regression to converge. Thus in our final analysis, we used logistic LASSO regression, which can perform variable selection and thus further reduce the dimensions of our covariates.
+As a preface, while the original model intention was written as above, there were still too many OTU's selected by the ZINB model for the logistic regression to converge. Thus in our final analysis, we used logistic LASSO regression, which can perform variable selection and thus further reduce the dimensions of our predictors.
 
 ```
 ## Loading Package
@@ -302,7 +302,16 @@ test = microbiome[-train.num,]
 
 ## analyze the data
 result = model_compare(train,test)
+```
 
+The model_compare function does the following:
+
+\begin{itemize}
+  \item Implements the ZINB package to subset OTUs that are then included in the logistic LASSO model. Trains the logistic LASSO model using a 10 fold cross validation and tests the best fitted model that is selected based on accuracy.
+  \item Trains random forest using a 10 fold cross validation and tests the best fitted model that is selected based on accuracy.
+\end{itemize}
+
+```
 ## generate ROC curve and AUC score
 roc(result$status,as.numeric(result$pred.lasso),plot=T,percent = T,
     legacy.axes = T,print.auc = T,col = "#377eb8",
@@ -310,8 +319,11 @@ roc(result$status,as.numeric(result$pred.lasso),plot=T,percent = T,
 plot.roc(result$status,as.numeric(result$pred.rf),percent = T,add=T,
          print.auc = T,print.auc.y = 40,col="#4daf4a")
 legend("bottomright",legend = c("Lasso","Random forest"),col=c("#377eb8","#4daf4a"),lwd=4)
+```
 
+The curve (AUC) for the logistical LASSO model and random forest are 85.7% and 97.4%  respectively. From the figure we note that for most thresholds random forest performs better than the logistic LASSO model at classifying individuals with and without ASD.  
 
+```
 ## generate information of confusion matrix
 ## calculate accuracy, specificity, sensitivity metrics for both model
 
@@ -331,9 +343,13 @@ draw_confusion_matrix(cm.lasso,title = "Lasso")
 draw_confusion_matrix(cm.rf,title = "Random Forest")
 ```
 
+The two confusion matrices and corresponding performance metrics of the logistic LASSO model and random forest reinforce that random forest outperforms the logistic LASSO model. Specifically, the confusion matrices are based on individuals being classified with ASD if their prediction probability is greater than 0.50. The accuracy of the logistic LASSO model (0.784) is considerably smaller than the accuracy of random forest (0.941). The specificity of the logistic LASSO model is 0.719 and 0.969 for random forest. The sensitivity of the logistic LASSO model and random forest are both 0.895.
+
 # Discussion
 
-In summary, we found that all measurements of performance (accuracy, sensitivity, and specificity) on the test data indicate that random forest outperforms the logistic LASSO model.
+In summary, we found that all measurements of performance (area under the curve, accuracy, sensitivity, and specificity) on the test data indicate that random forest outperforms the logistic LASSO model that used a subset of predictors selected by the ZINB model.
+
+The test data included a total of 51 participants of which 19 were individuals with ASD and 32 were individuals without ASD. The confusion matrices in the results provide context for the performance measurements, showing that logistic LASSO model and random forest both correctly identified 17 individuals as having ASD. With respect to correctly identifying individuals without ASD random forest correctly identified nine more individual compared the logistic LASSO model.
 
 ## Limitations
 
@@ -341,7 +357,7 @@ In summary, we found that all measurements of performance (accuracy, sensitivity
 
 2. We used a ZINB model and iteratively included 1 of 1322 OTUs as a covariate in the model to determine whether there is significant differential abundance based on the data. The iterative procedure was done to determine which OTUs to include in a final logistic model to predict ASD status. The procedure substantially reduced the number of OTUs to be considered in the the logistic model to 206 OTUs. 206 OTUs was still too many OTUs to be considered without introducing a penalty that would result in natural variable selection.
 
-3. The test data included a total of 51 participants of which 19 were individuals with ASD and 32 were individuals without ASD. The confusion matrices in the results provide context for the performance measurements, showing that random forest only correctly identified two more individual as having ASD when compared to the logistic LASSO model. With respect to correctly identifying individuals without ASD random forest correctly identified one more individual compared the logistic LASSO model.
+3. The test set is small with only 51 individuals.
 
 ## Future Directions
 
