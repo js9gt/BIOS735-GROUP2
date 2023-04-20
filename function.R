@@ -89,7 +89,7 @@ model_compare = function(train,test,seed = 1){
   set.seed(seed)
   trControl = trainControl(method = "cv", number = 10, search ="grid")
   
-  fit.rf = train(x = train.x, y = train.y,
+  fit.rf = train(x = train, y = train.y,
                  method = "rf",
                  metric = "Accuracy",
                  trControl = trControl)

@@ -1,0 +1,21 @@
+,name,importance,level1,level2,level3,level4,level5,level6,level7,level8
+1,OTU1225,100,d  Bacteria, k  norank, p  Firmicutes, c  Clostridia, o  Clostridiales, f  Lachnospiraceae, g  Lachnoclostridium, s  uncultured Clostridiales bacterium g  Lachnoclostridium
+2,OTU625,93.2974954034592,d  Bacteria, k  norank, p  Bacteroidetes, c  Bacteroidia, o  Bacteroidales, f  Prevotellaceae, g  Prevotella 2, s  uncultured organism g  Prevotella 2
+3,OTU1301,81.4715434946373,d  Bacteria, k  norank, p  Firmicutes, c  Negativicutes, o  Selenomonadales, f  Veillonellaceae, g  Megasphaera, s  uncultured bacterium g  Megasphaera
+4,OTU913,77.0413903679109,d  Bacteria, k  norank, p  Firmicutes, c  Clostridia, o  Clostridiales, f  Ruminococcaceae, g  Ruminococcaceae NK4A214 group, s  gut metagenome g  Ruminococcaceae NK4A214 group
+5,OTU784,76.272933124934,d  Bacteria, k  norank, p  Firmicutes, c  Clostridia, o  Clostridiales, f  Lachnospiraceae, g  [Eubacterium] xylanophilum group, s  unclassified g  [Eubacterium] xylanophilum group
+6,OTU1067,73.0115901149053,d  Bacteria, k  norank, p  Bacteroidetes, c  Bacteroidia, o  Bacteroidales, f  Prevotellaceae, g  Prevotella 2, s  uncultured bacterium g  Prevotella 2
+7,OTU628,68.0715365594223,d  Bacteria, k  norank, p  Firmicutes, c  Clostridia, o  Clostridiales, f  Ruminococcaceae, g  Ruminiclostridium 6, s  [Eubacterium] siraeum DSM 15702
+8,OTU241,65.9125842769226,d  Bacteria, k  norank, p  Firmicutes, c  Clostridia, o  Clostridiales, f  Christensenellaceae, g  Christensenellaceae R-7 group, s  unclassified g  Christensenellaceae R-7 group
+9,OTU550,65.475257960293,d  Bacteria, k  norank, p  Proteobacteria, c  Gammaproteobacteria, o  Enterobacteriales, f  Enterobacteriaceae, g  unclassified f  Enterobacteriaceae, s  unclassified f  Enterobacteriaceae
+10,OTU959,64.7354437121017,d  Bacteria, k  norank, p  Proteobacteria, c  Betaproteobacteria, o  Burkholderiales, f  Comamonadaceae, g  Comamonas, s  unclassified g  Comamonas
+11,OTU793,64.4616410199484,d  Bacteria, k  norank, p  Firmicutes, c  Clostridia, o  Clostridiales, f  Lachnospiraceae, g  Lachnospiraceae NK4A136 group, s  uncultured Firmicutes bacterium g  Lachnospiraceae NK4A136 group
+12,OTU910,60.9352031819301,d  Bacteria, k  norank, p  Firmicutes, c  Clostridia, o  Clostridiales, f  Ruminococcaceae, g  Ruminococcaceae UCG-014, s  unclassified g  Ruminococcaceae UCG-014
+13,OTU976,60.5819361167018,d  Bacteria, k  norank, p  Firmicutes, c  Clostridia, o  Clostridiales, f  Ruminococcaceae, g  Ruminococcaceae UCG-014, s  unclassified g  Ruminococcaceae UCG-014
+14,OTU538,58.7861351786461,d  Bacteria, k  norank, p  Deinococcus-Thermus, c  Deinococci, o  Thermales, f  Thermaceae, g  Thermus, s  Thermus scotoductus
+15,OTU951,57.3915482198283,d  Bacteria, k  norank, p  Bacteroidetes, c  Bacteroidia, o  Bacteroidales, f  Bacteroidaceae, g  Bacteroides, s  unclassified g  Bacteroides
+16,OTU390,56.9932876835226,d  Bacteria, k  norank, p  Bacteroidetes, c  Bacteroidia, o  Bacteroidales, f  Porphyromonadaceae, g  Barnesiella, s  uncultured organism g  Barnesiella
+17,OTU1268,56.4005143357203,d  Bacteria, k  norank, p  Firmicutes, c  Clostridia, o  Clostridiales, f  Ruminococcaceae, g  Ruminococcaceae UCG-005, s  unclassified g  Ruminococcaceae UCG-005
+18,OTU167,54.2310219410698,d  Bacteria, k  norank, p  Bacteroidetes, c  Bacteroidia, o  Bacteroidales, f  Prevotellaceae, g  Prevotella 9, s  Prevotella copri
+19,OTU89,51.1451204891926,d  Bacteria, k  norank, p  Firmicutes, c  Negativicutes, o  Selenomonadales, f  Veillonellaceae, g  Megamonas, s  unclassified g  Megamonas
+20,OTU741,51.0706579735117,d  Bacteria, k  norank, p  Firmicutes, c  Clostridia, o  Clostridiales, f  Peptostreptococcaceae, g  Intestinibacter, s  Intestinibacter bartlettii DSM 16795
