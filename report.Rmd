@@ -3,10 +3,12 @@ title: "Human gut microbiome for pediatric Autism Spectrum Disorder (ASD) Report
 author: 'Gutsy Graduates: Yixiang Qu, Jialiu Xie, Jose S. Lopez, Yifan Dai, Jane She'
 date: "`r Sys.Date()`"
 output:
+  html_document:
+    df_print: paged
+  word_document: default
   pdf_document:
     includes:
       in_header: Report/header.tex
-  word_document: default
 bibliography: Report/references.bib
 header-includes: \setlength\parindent{24pt}
 ---
@@ -129,7 +131,7 @@ Let
 \end{center} so we begin by solving $E[z_{i,g}|\zeta_{i,g}^{(k)}, Y_{i,g}]$ and obtaining
 
 \begin{equation} \label{estep}
-     E[z_{i,g}|\zeta_{i,g}^{(k)}, Y_{i,g}] = P(z_{i,g} = 1 | \zeta_{i,g}^{(k)}, Y_{i,g}) = \frac{\pi_{i,g}^{(k)}}{\pi_{i,g}^{(k)} + (1 - \pi_{i,g}^{(k)})(\frac{1}{1 + \theta_{g}^{(k)}\mu_{i,g}^{(k)}})^{\theta_{g}^{-(k)}}}I(y_{i,g}=0) \tag{i}
+     E[z_{i,g}|\zeta_{i,g}^{(k)}, Y_{i,g}] = P(z_{i,g} = 1 | \zeta_{i,g}^{(k)}, Y_{i,g}) = \frac{\pi_{i,g}^{(k)}}{\pi_{i,g}^{(k)} + (1 - \pi_{i,g}^{(k)})(\frac{1}{1 + \theta_{g}^{(k)}\mu_{i,g}^{(k)}})^{[\theta_{g}^{(k)}]^{-1}}}I(y_{i,g}=0) \tag{i}
 \end{equation}
 
 \noindent Using equation \eqref{estep}, we can calculate
@@ -163,7 +165,7 @@ S(\beta_{g}^{(k)}, \gamma_{g}^{(k)}, \theta_{g}^{(k)}) =
     X^{\mathsf{T}}e_{2}(\beta_{g}^{(k)}, \gamma_{g}^{(k)}, \theta_{g}^{(k)}) \\
     \frac{\partial l_{c}}{\partial \theta_{g}}|_{\beta_{g}^{(k)}, \gamma_{g}^{(k)}, \theta_{g}^{(k)}}
 \end{bmatrix}, \tag{ii}
-\end{equation} \\
+\end{equation}
 
 \noindent where \begin{math}
 e_{1}(\beta_{g}^{(k)}, \gamma_{g}^{(k)}, \theta_{g}^{(k)}) = 
@@ -191,7 +193,7 @@ z_{n,g} - \pi_{n,g}^{(k)}
     \item $-E\bigr[\frac{\partial^{2} l_{c,(i,g)}}{\partial \gamma_{g}\gamma_{g}^{\mathsf{T}}}\bigr] = X^{\mathsf{T}}P_{2}(\beta_{g}^{(k)}, \gamma_{g}^{(k)}, \theta_{g}^{(k)})X$, where $P_{2}(\beta_{g}^{(k)}, \gamma_{g}^{(k)}, \theta_{g}^{(k)}) = \textnormal{diag}\bigl\{\frac{(\exp(x_{i}^{\mathsf{T}}\gamma_{g}^{(k)})}{1 + \theta_{g} \exp(x_{i}^{\mathsf{T}} \gamma_{g}^{(k)})^{2}}\bigl\}$,
     \item $-E\bigr[\frac{\partial^{2} l_{c,(i,g)}}{\partial \gamma_{g}\beta_{g}}\bigr] = 0$,
     \item $-E\bigr[\frac{\partial^{2} l_{c,(i,g)}}{\partial \gamma_{g}\theta_{g}}\bigr] = 0$, and  
-    \item $-E\bigr[\frac{\partial^{2} l_{c,(i,g)}}{\partial \theta_{g}^{2}}\bigr] \approx (1 - z_{i,g})\theta_{g}^{-4}(2\theta_{g}\psi(\theta_{g}^{-1}) - 2\theta_{g}\psi(y_(i,g) + \theta_{g}^{-1}) + 2\theta_{g}(1 + \theta_{g}\mu_{i,g}) + \psi'(\theta_{g}^{-1}) - \psi'(y_{i,g} + \theta_{g}^{-1} - 2\theta^{2}_{g}(\frac{\mu_{i,g}}{1 + \theta_{g}\mu_{i,g}})] $
+    \item $-E\bigr[\frac{\partial^{2} l_{c,(i,g)}}{\partial \theta_{g}^{2}}\bigr] \approx (1 - z_{i,g})\theta_{g}^{-4}(2\theta_{g}\psi(\theta_{g}^{-1}) - 2\theta_{g}\psi(y_{i,g} + \theta_{g}^{-1}) + 2\theta_{g}(1 + \theta_{g}\mu_{i,g}) + \psi'(\theta_{g}^{-1}) - \psi'(y_{i,g} + \theta_{g}^{-1} - 2\theta^{2}_{g}(\frac{\mu_{i,g}}{1 + \theta_{g}\mu_{i,g}})] $
 \end{itemize}
 
 \noindent Let $I_{n}(\beta_{g}^{(k)}, \gamma_{g}^{(k)}, \theta_{g}^{(k)})$ be the fisher information matrix for the current iteration $k$.
@@ -201,7 +203,7 @@ I_{n}(\beta_{g}^{(k)}, \gamma_{g}^{(k)}, \theta_{g}^{(k)}) \\ =
 \begin{bmatrix}
     X^{\mathsf{T}}P_{1}(\beta_{g}^{(k)}, \gamma_{g}^{(k)}, \theta_{g}^{(k)})X & &  \\ 
      & X^{\mathsf{T}}P_{2}(\beta_{g}^{(k)}, \gamma_{g}^{(k)}, \theta_{g}^{(k)})X &  \\
-     & & \frac{\partial^{2} l_{c}}{\partial \theta_{g}^{2}} \rvert_{\beta_{g}^{(k)}, \gamma_{g}^{(k)}, \theta_{g}^{(k)}}
+     & & \-E\bigr[\frac{\partial^{2} l_{c,(i,g)}}{\partial \theta_{g}^{2}}\bigr] \rvert_{\beta_{g}^{(k)}, \gamma_{g}^{(k)}, \theta_{g}^{(k)}}
 \end{bmatrix} \tag{iii}
 \end{flalign*}
 
