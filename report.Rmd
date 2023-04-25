@@ -193,7 +193,7 @@ z_{n,g} - \pi_{n,g}^{(k)}
     \item $-E\bigr[\frac{\partial^{2} l_{c,(i,g)}}{\partial \gamma_{g}\gamma_{g}^{\mathsf{T}}}\bigr] = X^{\mathsf{T}}P_{2}(\beta_{g}^{(k)}, \gamma_{g}^{(k)}, \theta_{g}^{(k)})X$, where $P_{2}(\beta_{g}^{(k)}, \gamma_{g}^{(k)}, \theta_{g}^{(k)}) = \textnormal{diag}\bigl\{\frac{(\exp(x_{i}^{\mathsf{T}}\gamma_{g}^{(k)})}{1 + \theta_{g} \exp(x_{i}^{\mathsf{T}} \gamma_{g}^{(k)})^{2}}\bigl\}$,
     \item $-E\bigr[\frac{\partial^{2} l_{c,(i,g)}}{\partial \gamma_{g}\beta_{g}}\bigr] = 0$,
     \item $-E\bigr[\frac{\partial^{2} l_{c,(i,g)}}{\partial \gamma_{g}\theta_{g}}\bigr] = 0$, and  
-    \item $-E\bigr[\frac{\partial^{2} l_{c,(i,g)}}{\partial \theta_{g}^{2}}\bigr] \approx (1 - z_{i,g})\theta_{g}^{-4}(2\theta_{g}\psi(\theta_{g}^{-1}) - 2\theta_{g}\psi(y_{i,g} + \theta_{g}^{-1}) + 2\theta_{g}(1 + \theta_{g}\mu_{i,g}) + \psi'(\theta_{g}^{-1}) - \psi'(y_{i,g} + \theta_{g}^{-1} - 2\theta^{2}_{g}(\frac{\mu_{i,g}}{1 + \theta_{g}\mu_{i,g}})] $
+    \item $-E\bigr[\frac{\partial^{2} l_{c,(i,g)}}{\partial \theta_{g}^{2}}\bigr] \approx (1 - z_{i,g})\theta_{g}^{-4}(2\theta_{g}\psi(\theta_{g}^{-1}) - 2\theta_{g}\psi(y_{i,g} + \theta_{g}^{-1}) + 2\theta_{g}\log(1 + \theta_{g}\mu_{i,g}) + \psi'(\theta_{g}^{-1}) - \psi'(y_{i,g} + \theta_{g}^{-1} - \theta^{2}_{g}(\frac{\mu_{i,g}}{1 + \theta_{g}\mu_{i,g}})] $
 \end{itemize}
 
 \noindent Let $I_{n}(\beta_{g}^{(k)}, \gamma_{g}^{(k)}, \theta_{g}^{(k)})$ be the fisher information matrix for the current iteration $k$.
@@ -270,9 +270,9 @@ The "caret" package is a pre-written package that allows us to use a pre-coded r
 
 Our package, the "ZINB" package includes the following functions:
 
-* LRT1D: Tests the intercept model against the model fitted by the design matrix. Outputs parameters of the fitted model, chisquared statistics, degrees of freedom, and p-values.
-
 * fit.zinb: Conducts ZINB negative binomial regression on the data. Estimates parameters and their covariance using the EM algorithm. Outputs estimates for the coefficients of the negative binomial model, the zero inflated model, the reciprocal of the size parameter for the negative binomial distribution, the covariance matrix for all estimated parameters, aand the log-likelihood of the estimated model.
+
+* LRT1D: Tests the intercept model against the model fitted by the design matrix. Outputs parameters of the fitted model, chisquared statistics, degrees of freedom, and p-values.
 
 * LRTnD: Tests for the intercept model against the model fitted by the design matrix-- allows for multiple responses. Outputs parameters of the fitted model, chisquared statistics, degrees of freedom, and p-values.
 
@@ -284,7 +284,6 @@ As a preface, while the original model intention was written as above, there wer
 ```{r}
 ## Loading Package
 library(devtools)
-library(Rcpp)
 library(dplyr)
 library(ZINB)
 library(caret)
@@ -318,15 +317,15 @@ The model_compare function does the following:
 
 ```{r}
 ## generate ROC curve and AUC score
-roc(result$status,as.numeric(result$pred.lasso),plot=T,percent = T,
-    legacy.axes = T,print.auc = T,col = "#377eb8",
+plot.roc(result$status,as.numeric(result$pred.lasso),percent = T,
+    legacy.axes = T,print.auc = T,col = "#377eb8", quiet=T,
     ylab = "True positive (%)",xlab = "False Positive %",main = "ROC")
 plot.roc(result$status,as.numeric(result$pred.rf),percent = T,add=T,
          print.auc = T,print.auc.y = 40,col="#4daf4a")
 legend("bottomright",legend = c("Lasso","Random forest"),col=c("#377eb8","#4daf4a"),lwd=4)
 ```
 
-The curve (AUC) for the logistical LASSO model and random forest are 85.7% and 96.5%  respectively. From the figure we note that for most thresholds random forest performs better than the logistic LASSO model at classifying individuals with and without ASD.  
+The curve (AUC) for the logistical LASSO model and random forest are 88.3% and 96.5%  respectively. From the figure we note that for most thresholds random forest performs better than the logistic LASSO model at classifying individuals with and without ASD.  
 
 ```{r}
 ## generate information of confusion matrix

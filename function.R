@@ -69,7 +69,7 @@ model_compare = function(train,test, seed){
   ## LRT for multiple responses to find important predictors
 
   
-  q.value = LRTnD(as.numeric(as.logical(train.y)),train)$q.value
+  q.value = LRTnD(as.numeric(as.logical(train.y)),train, tol=1e-4, maxIter=2000)$q.value
   
   ## get filter train data 
   
