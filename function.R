@@ -48,7 +48,7 @@ draw_confusion_matrix <- function(cm,title) {
 
 
 
-model_compare = function(train,test,seed = 1){
+model_compare = function(train,test, seed){
   
   ## obtain train and test y 
   

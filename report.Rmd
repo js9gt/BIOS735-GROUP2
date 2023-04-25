@@ -304,7 +304,7 @@ train = microbiome[train.num,]
 test = microbiome[-train.num,]
 
 ## analyze the data
-result = model_compare(train,test)
+result = model_compare(train,test, seed = 1)
 ```
 
 
@@ -326,7 +326,7 @@ plot.roc(result$status,as.numeric(result$pred.rf),percent = T,add=T,
 legend("bottomright",legend = c("Lasso","Random forest"),col=c("#377eb8","#4daf4a"),lwd=4)
 ```
 
-The curve (AUC) for the logistical LASSO model and random forest are 85.7% and 97.4%  respectively. From the figure we note that for most thresholds random forest performs better than the logistic LASSO model at classifying individuals with and without ASD.  
+The curve (AUC) for the logistical LASSO model and random forest are 85.7% and 96.5%  respectively. From the figure we note that for most thresholds random forest performs better than the logistic LASSO model at classifying individuals with and without ASD.  
 
 ```{r}
 ## generate information of confusion matrix
@@ -349,7 +349,7 @@ draw_confusion_matrix(cm.rf,title = "Random Forest")
 ```
 
 
-The two confusion matrices and corresponding performance metrics of the logistic LASSO model and random forest reinforce that random forest outperforms the logistic LASSO model. Specifically, the confusion matrices are based on individuals being classified with ASD if their prediction probability is greater than 0.50. The accuracy of the logistic LASSO model (0.784) is considerably smaller than the accuracy of random forest (0.941). The specificity of the logistic LASSO model is 0.719 and 0.969 for random forest. The sensitivity of the logistic LASSO model and random forest are both 0.895.
+The two confusion matrices and corresponding performance metrics of the logistic LASSO model and random forest reinforce that random forest outperforms the logistic LASSO model. Specifically, the confusion matrices are based on individuals being classified with ASD if their prediction probability is greater than 0.50. The accuracy of the logistic LASSO model (0.784) is considerably smaller than the accuracy of random forest (0.863). The specificity of the logistic LASSO model is 0.719 and 0.875 for random forest. The sensitivity of the logistic LASSO model was 0.895 and the sensitivity ofthe random forest was 0.842.
 
 # Discussion
 
@@ -357,12 +357,11 @@ In summary, we found that all measurements of performance (area under the curve,
 
 The test data included a total of 51 participants of which 19 were individuals with ASD and 32 were individuals without ASD. The confusion matrices in the results provide context for the performance measurements, showing that logistic LASSO model and random forest both correctly identified 17 individuals as having ASD. With respect to correctly identifying individuals without ASD random forest correctly identified nine more individual compared the logistic LASSO model.
 
-We can also look at variable importance scores, which were output from the random forest, to give insight into which OTUs specifically were the most important predictors in the ASD classification problem. We can see that the following OTUs were the most important in prediction along with members of their "clade" across each row. 
+We can also look at variable importance scores, which were output from the random forest, to give insight into which OTUs specifically were the most important predictors in the ASD classification problem. We can see that the following OTUs were the most important in prediction along with the genus of the OTU members.
 
-```{r}
-read.csv("VarImp.csv")
-```
+Weighted sums of the absolute regression coefficients. The weights are a function of the reduction of the sums of squares across the number of partial least square components and are computed separately for each outcome. Therefore, the contribution of the coefficients are weighted proportionally to the reduction in the sums of squares [@caret].
 
+![Variable Importance Scores](Figures/varimp.png)
 
 ## Limitations
 

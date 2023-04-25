@@ -19,7 +19,7 @@ train = microbiome[train.num,]
 test = microbiome[-train.num,]
 
 ## analyze the data
-result = model_compare(train,test)
+result = model_compare(train,test, seed = 1)
 
 
 ## generate ROC curve and AUC score
