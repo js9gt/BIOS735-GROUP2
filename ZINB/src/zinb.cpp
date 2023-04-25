@@ -21,19 +21,6 @@ arma::vec Qik(const arma::vec& pi_k, const arma::vec& mu_k, const arma::vec& y_k
   return pi_k % indicator / (pi_k + (1 - pi_k) / pow(1 + thetak * mu_k, 1 / thetak));
 }
 
-// [[Rcpp::export]]
-arma::vec l1_theta(const arma::vec& z_k, const arma::vec& y_k, const arma::vec& mu_k, double thetak) {
-  int n = y_k.n_elem;
-  arma::vec dg(n);
-  for (int i = 0; i < n; i++) {
-    dg(i) = R::digamma(y_k(i) + 1 / thetak);
-  }
-  arma::vec score = (1 - z_k) / pow(thetak, 2) %
-    (R::digamma(1 / thetak) - dg + log(1 + thetak * mu_k)) +
-    (y_k - mu_k) % (1 - z_k) / thetak / (1 + thetak * mu_k);
-  return score;
-}
-
 // Score function: Compute the score of the function
 // [[Rcpp::export]]
 arma::vec score(const arma::mat& X, const arma::vec& y_k, const arma::vec& z_k, const arma::vec& mu_k, const arma::vec& pi_k, double thetak) {
@@ -45,31 +32,11 @@ arma::vec score(const arma::mat& X, const arma::vec& y_k, const arma::vec& z_k, 
     arma::vec ey = (1 - z_k) % (y_k - mu_k);
     arma::vec ez = z_k - pi_k;
 
-    arma::vec result(2 * p + 1);
+    arma::vec result(2 * p);
     result.subvec(0, p - 1) = X.t() * V * ey;
     result.subvec(p, 2 * p - 1) = X.t() * ez;
-    result(2 * p) = sum(l1_theta(z_k, y_k, mu_k, thetak)) * thetak;
 
     return result;
-}
-
-// Compute the approximate fisher information
-// [[Rcpp::export]]
-arma::vec l2_theta(const arma::vec& z_k, const arma::vec& y_k, const arma::vec& mu_k, double thetak) {
-  int n = y_k.n_elem;
-  arma::vec dg(n);
-  arma::vec tg(n);
-  for (int i = 0; i < n; i++) {
-    dg(i) = R::digamma(y_k(i) + 1 / thetak);
-    tg(i) = R::trigamma(y_k(i) + 1 / thetak);
-  }
-  arma::vec l2 = (1 - z_k) / pow(thetak, 4) % (
-    2 * thetak * R::digamma(1 / thetak) - 2 * thetak * dg +
-    2 * thetak * (1 + thetak * mu_k) + R::trigamma(1 / thetak) - tg -
-    2 * pow(thetak, 2) * mu_k / (1 + thetak) -
-    2 * pow(thetak, 2) * mu_k / (1 + thetak * mu_k)
-  );
-  return l2;
 }
 
 // Compute the Fisher information
@@ -83,12 +50,41 @@ arma::mat In(const arma::mat& X, const arma::vec& y_k, const arma::vec& z_k, con
   Py.diag() = (1 - z_k) % mu_k / (1 + thetak * mu_k);
   Pz.diag() = pi_k / (1 + exp(X * gammak));
 
-  arma::mat I_mat = arma::zeros<arma::mat>(2 * p + 1, 2 * p + 1);
+  arma::mat I_mat = arma::zeros<arma::mat>(2 * p, 2 * p);
   I_mat.submat(0, 0, p - 1, p - 1) = X.t() * Py * X;
   I_mat.submat(p, p, 2 * p - 1, 2 * p - 1) = X.t() * Pz * X;
-  I_mat(2 * p, 2 * p) = sum(l2_theta(z_k, y_k, mu_k, thetak)) * pow(thetak, 2) + sum(l1_theta(z_k, y_k, mu_k, thetak)) * thetak;
 
   return I_mat;
+}
+
+// Moment equation of theta
+// [[Rcpp::export]]
+double M_estimator(double thetak, const arma::vec& yik, const arma::vec& muik, const arma::vec& zik, int p) {
+  return arma::sum((1 - zik) % arma::pow(yik - muik, 2) / muik / (1 + thetak * muik) - (1 - zik)) + p;
+}
+
+// Derivatives of the moment derivation
+// [[Rcpp::export]]
+double M_deriv(double thetak, const arma::vec& yik, const arma::vec& muik, const arma::vec& zik) {
+  return - arma::sum((1 - zik) % arma::pow(yik - muik, 2) / arma::pow(1 + thetak * muik, 2));
+}
+
+// update theta
+// [[Rcpp::export]]
+double theta_update(double thetak, int numIter, const arma::vec& yik, const arma::vec& muik, const arma::vec& zik, int p) {
+  // if the newton method returns something smaller than 0, this indicates that the model is not overdispersed
+  // hence we use very small dispersion parameter, the result is close to Poisson regression
+  if (M_estimator(0, yik, muik, zik, p) <= 0) {
+    thetak = 1e-10;
+  } else {
+    for (int i = 0; i < numIter; ++i) {
+      thetak -= M_estimator(thetak, yik, muik, zik, p) / M_deriv(thetak, yik, muik, zik);
+    }
+  }
+  if (thetak < 0) {
+    thetak = 1e-10;
+  }
+  return thetak;
 }
 
 // The density of zero inflated negative binomial distribution
@@ -118,7 +114,8 @@ List par_EM(const arma::mat& X, const arma::vec& y_k, double tol = 1e-3, int max
   int p = X.n_cols;
 
   arma::vec betak, gammak;
-  long double thetak, loglikelihood;
+  double thetak, loglik_new, loglik_old;
+  loglik_old = INFINITY;
 
   // model initialization
   if (initial.isNull()) {
@@ -131,7 +128,7 @@ List par_EM(const arma::mat& X, const arma::vec& y_k, double tol = 1e-3, int max
     thetak = as<double>(initial_list["theta"]);
   }
 
-  // determin whether inflated model should be fitted
+  // determine whether inflated model should be fitted
   if(min(y_k) != 0) {
     inflation = false;
   }
@@ -144,67 +141,83 @@ List par_EM(const arma::mat& X, const arma::vec& y_k, double tol = 1e-3, int max
 
   // zero inflated model
   if(inflation){
-    identity = arma::eye(2 * p + 1, 2 * p + 1);
-    I_mat = arma::eye(2 * p + 1, 2 * p + 1);
-    arma::vec s(2 * p + 1), par_old(2 * p + 1), par_new(2 * p + 1);
+    identity = arma::eye(2 * p, 2 * p);
+    I_mat = arma::eye(2 * p, 2 * p);
+    arma::vec s(2 * p), par_old(2 * p), par_new(2 * p);
     while (iter < maxIter && eps > tol) {
-      // E step
+      // ---- E step ----
       pi_k = c_pi(X, gammak);
       mu_k = c_mu(X, betak);
       z_k = Qik(pi_k, mu_k, y_k, thetak);
+      // theta is updated here
+      thetak = theta_update(thetak, 15, y_k, mu_k, z_k, p);
 
-      // M step using one step Newton-Raphson method
+      // ---- Evaluating the Model ----
+      arma::vec p_0 = 1 / (1 + thetak * mu_k);
+      arma::vec logprob = log(dznbinom(y_k, 1 / thetak, p_0, pi_k));
+      // remove NA and Infs
+      loglik_new = accu(logprob.elem(find_finite(logprob)));
+      eps = std::abs(loglik_new - loglik_old);
+      if (std::isnan(eps)) {
+        eps = INFINITY;
+      }
+      loglik_old = loglik_new;      
+
+      // ---- M step ----
       s = score(X, y_k, z_k, mu_k, pi_k, thetak);
       I_mat = In(X, y_k, z_k, mu_k, pi_k, gammak, thetak);
 
-      par_old = join_vert(join_vert(betak, gammak), arma::vec({static_cast<double> (log(thetak))}));
+      par_old = arma::join_vert(betak, gammak);
       par_new = par_old + arma::solve(I_mat, s, arma::solve_opts::fast + arma::solve_opts::allow_ugly);
-      eps = sqrt(sum(square(par_old - par_new)));
 
       betak = par_new.subvec(0, p - 1);
       gammak = par_new.subvec(p, 2 * p - 1);
-      thetak = exp(par_new(2 * p));
 
       iter = iter + 1;
     }
-    // compute the loglikelihood
+    // compute the final loglikelihood
     pi_k = c_pi(X, gammak);
     mu_k = c_mu(X, betak);
     arma::vec p_0 = 1 / (1 + thetak * mu_k);
     arma::vec logprob = log(dznbinom(y_k, 1 / thetak, p_0, pi_k));
     // remove NA and Infs
-    loglikelihood = accu(logprob.elem(find_finite(logprob)));
+    loglik_new = accu(logprob.elem(find_finite(logprob)));
   }
   else{
     // this is the given information for the non-inflated model
-    identity = arma::eye(p + 1, p + 1);
-    I_mat = arma::eye(p + 1, p + 1);
+    identity = arma::eye(p, p);
+    I_mat = arma::eye(p, p);
     pi_k = arma::zeros(n);
     z_k = arma::zeros(n);
-    arma::vec s(2 * p + 1), par_old(2 * p + 1), par_new(2 * p + 1);
-    arma::uvec index = arma::join_cols(arma::regspace<arma::uvec>(0, p - 1), arma::uvec({static_cast<unsigned int>(2 * p)}));
+    arma::vec s(p);
+    arma::uvec index = arma::regspace<arma::uvec>(0, p - 1);
 
     // fit a negative binomial regression
     while (iter < maxIter && eps > tol) {
+      // compute theta and model evaluating
       mu_k = c_mu(X, betak);
+      thetak = theta_update(thetak, 15, y_k, mu_k, z_k, p);
+      arma::vec p_0 = 1 / (1 + thetak * mu_k);
+      arma::vec logprob = log(dznbinom(y_k, 1 / thetak, p_0, pi_k));
+      loglik_new = accu(logprob.elem(find_finite(logprob)));
+      eps = std::abs(loglik_new - loglik_old);
+      if (std::isnan(eps)) {
+        eps = INFINITY;
+      }
+      loglik_old = loglik_new;  
+
       // one step Newton-Raphson method
       s = score(X, y_k, z_k, mu_k, pi_k, thetak)(index);
       I_mat = In(X, y_k, z_k, mu_k, pi_k, gammak, thetak)(index, index);
-
-      par_old = join_vert(betak, arma::vec({static_cast<double> (log(thetak))}));
-      par_new = par_old + arma::solve(I_mat, s, arma::solve_opts::fast + arma::solve_opts::allow_ugly);
-      eps = sqrt(sum(square(par_old - par_new)));
-
-      betak = par_new.subvec(0, p - 1);
-      thetak = exp(par_new(p));
+      betak = betak + arma::solve(I_mat, s, arma::solve_opts::fast + arma::solve_opts::allow_ugly);
       iter = iter + 1;
     }
-    // compute the loglikelihood
+    // compute the final loglikelihood
     mu_k = c_mu(X, betak);
     arma::vec p_0 = 1 / (1 + thetak * mu_k);
     arma::vec logprob = log(dznbinom(y_k, 1 / thetak, p_0, pi_k));
     // remove NA and Infs
-    loglikelihood = accu(logprob.elem(find_finite(logprob)));
+    loglik_new = accu(logprob.elem(find_finite(logprob)));
   }
 
   if (eps > tol) {
@@ -216,7 +229,9 @@ List par_EM(const arma::mat& X, const arma::vec& y_k, double tol = 1e-3, int max
     _["gamma"] = gammak,
     _["theta"] = thetak,
     _["vcov"] = arma::solve(I_mat, identity, arma::solve_opts::allow_ugly),
-    _["loglikelihood"] = loglikelihood
+    _["loglikelihood"] = loglik_new,
+    _["iterations"] = iter,
+    _["error"] = eps
   );
 }
 

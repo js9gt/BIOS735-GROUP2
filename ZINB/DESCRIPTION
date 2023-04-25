@@ -1,14 +1,20 @@
 Package: ZINB
 Type: Package
 Title: Zero-Inflated Negative Binomial Regression
-Version: 0.3.3
-Author: c(person("Yifan", "Dai", email="yfd@unc.edu", role = c("aut", "cre")))
+Version: 0.4.0
+Author: c(
+    person("Yifan", "Dai", email="yfd@unc.edu", role = c("aut", "cre")),
+    person("Yixiang", "Qu", email="yqu@unc.edu", role = c("aut")),
+    person("Jialiu", "Xie", email="jialiux2@live.unc.edu", role = c("aut")),
+    person("Jose", "Lopez", email="jsljr@live.unc.edu", role = c("aut")),
+    person("Jane", "She", email="jane.she@unc.edu", role = c("aut")))
+Maintainer: Yifan Dai <yfd@unc.edu>
 Description: Estimation and inference for zero-inflated negative binomial regression.
 License: GPL-3
 Encoding: UTF-8
 SystemRequirements: C++11
 Imports: Rcpp (>= 0.11.0), RcppArmadillo (>= 0.9.850.1.0)
-LinkingTo: Rcpp (>= 0.11.0), RcppArmadillo (>= 0.9.850.1.0)
+LinkingTo: Rcpp, RcppArmadillo
 Suggests: 
     testthat (>= 3.0.0)
 RoxygenNote: 7.2.3

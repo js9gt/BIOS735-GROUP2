@@ -49,20 +49,6 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// l1_theta
-arma::vec l1_theta(const arma::vec& z_k, const arma::vec& y_k, const arma::vec& mu_k, double thetak);
-RcppExport SEXP _ZINB_l1_theta(SEXP z_kSEXP, SEXP y_kSEXP, SEXP mu_kSEXP, SEXP thetakSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const arma::vec& >::type z_k(z_kSEXP);
-    Rcpp::traits::input_parameter< const arma::vec& >::type y_k(y_kSEXP);
-    Rcpp::traits::input_parameter< const arma::vec& >::type mu_k(mu_kSEXP);
-    Rcpp::traits::input_parameter< double >::type thetak(thetakSEXP);
-    rcpp_result_gen = Rcpp::wrap(l1_theta(z_k, y_k, mu_k, thetak));
-    return rcpp_result_gen;
-END_RCPP
-}
 // score
 arma::vec score(const arma::mat& X, const arma::vec& y_k, const arma::vec& z_k, const arma::vec& mu_k, const arma::vec& pi_k, double thetak);
 RcppExport SEXP _ZINB_score(SEXP XSEXP, SEXP y_kSEXP, SEXP z_kSEXP, SEXP mu_kSEXP, SEXP pi_kSEXP, SEXP thetakSEXP) {
@@ -76,20 +62,6 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< const arma::vec& >::type pi_k(pi_kSEXP);
     Rcpp::traits::input_parameter< double >::type thetak(thetakSEXP);
     rcpp_result_gen = Rcpp::wrap(score(X, y_k, z_k, mu_k, pi_k, thetak));
-    return rcpp_result_gen;
-END_RCPP
-}
-// l2_theta
-arma::vec l2_theta(const arma::vec& z_k, const arma::vec& y_k, const arma::vec& mu_k, double thetak);
-RcppExport SEXP _ZINB_l2_theta(SEXP z_kSEXP, SEXP y_kSEXP, SEXP mu_kSEXP, SEXP thetakSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const arma::vec& >::type z_k(z_kSEXP);
-    Rcpp::traits::input_parameter< const arma::vec& >::type y_k(y_kSEXP);
-    Rcpp::traits::input_parameter< const arma::vec& >::type mu_k(mu_kSEXP);
-    Rcpp::traits::input_parameter< double >::type thetak(thetakSEXP);
-    rcpp_result_gen = Rcpp::wrap(l2_theta(z_k, y_k, mu_k, thetak));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -107,6 +79,51 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< const arma::vec& >::type gammak(gammakSEXP);
     Rcpp::traits::input_parameter< double >::type thetak(thetakSEXP);
     rcpp_result_gen = Rcpp::wrap(In(X, y_k, z_k, mu_k, pi_k, gammak, thetak));
+    return rcpp_result_gen;
+END_RCPP
+}
+// M_estimator
+double M_estimator(double thetak, const arma::vec& yik, const arma::vec& muik, const arma::vec& zik, int p);
+RcppExport SEXP _ZINB_M_estimator(SEXP thetakSEXP, SEXP yikSEXP, SEXP muikSEXP, SEXP zikSEXP, SEXP pSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< double >::type thetak(thetakSEXP);
+    Rcpp::traits::input_parameter< const arma::vec& >::type yik(yikSEXP);
+    Rcpp::traits::input_parameter< const arma::vec& >::type muik(muikSEXP);
+    Rcpp::traits::input_parameter< const arma::vec& >::type zik(zikSEXP);
+    Rcpp::traits::input_parameter< int >::type p(pSEXP);
+    rcpp_result_gen = Rcpp::wrap(M_estimator(thetak, yik, muik, zik, p));
+    return rcpp_result_gen;
+END_RCPP
+}
+// M_deriv
+double M_deriv(double thetak, const arma::vec& yik, const arma::vec& muik, const arma::vec& zik);
+RcppExport SEXP _ZINB_M_deriv(SEXP thetakSEXP, SEXP yikSEXP, SEXP muikSEXP, SEXP zikSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< double >::type thetak(thetakSEXP);
+    Rcpp::traits::input_parameter< const arma::vec& >::type yik(yikSEXP);
+    Rcpp::traits::input_parameter< const arma::vec& >::type muik(muikSEXP);
+    Rcpp::traits::input_parameter< const arma::vec& >::type zik(zikSEXP);
+    rcpp_result_gen = Rcpp::wrap(M_deriv(thetak, yik, muik, zik));
+    return rcpp_result_gen;
+END_RCPP
+}
+// theta_update
+double theta_update(double thetak, int numIter, const arma::vec& yik, const arma::vec& muik, const arma::vec& zik, int p);
+RcppExport SEXP _ZINB_theta_update(SEXP thetakSEXP, SEXP numIterSEXP, SEXP yikSEXP, SEXP muikSEXP, SEXP zikSEXP, SEXP pSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< double >::type thetak(thetakSEXP);
+    Rcpp::traits::input_parameter< int >::type numIter(numIterSEXP);
+    Rcpp::traits::input_parameter< const arma::vec& >::type yik(yikSEXP);
+    Rcpp::traits::input_parameter< const arma::vec& >::type muik(muikSEXP);
+    Rcpp::traits::input_parameter< const arma::vec& >::type zik(zikSEXP);
+    Rcpp::traits::input_parameter< int >::type p(pSEXP);
+    rcpp_result_gen = Rcpp::wrap(theta_update(thetak, numIter, yik, muik, zik, p));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -177,10 +194,11 @@ static const R_CallMethodDef CallEntries[] = {
     {"_ZINB_c_pi", (DL_FUNC) &_ZINB_c_pi, 2},
     {"_ZINB_c_mu", (DL_FUNC) &_ZINB_c_mu, 2},
     {"_ZINB_Qik", (DL_FUNC) &_ZINB_Qik, 4},
-    {"_ZINB_l1_theta", (DL_FUNC) &_ZINB_l1_theta, 4},
     {"_ZINB_score", (DL_FUNC) &_ZINB_score, 6},
-    {"_ZINB_l2_theta", (DL_FUNC) &_ZINB_l2_theta, 4},
     {"_ZINB_In", (DL_FUNC) &_ZINB_In, 7},
+    {"_ZINB_M_estimator", (DL_FUNC) &_ZINB_M_estimator, 5},
+    {"_ZINB_M_deriv", (DL_FUNC) &_ZINB_M_deriv, 4},
+    {"_ZINB_theta_update", (DL_FUNC) &_ZINB_theta_update, 6},
     {"_ZINB_dznbinom", (DL_FUNC) &_ZINB_dznbinom, 4},
     {"_ZINB_par_EM", (DL_FUNC) &_ZINB_par_EM, 6},
     {"_ZINB_LRT1G", (DL_FUNC) &_ZINB_LRT1G, 6},

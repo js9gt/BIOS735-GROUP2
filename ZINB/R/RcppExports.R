@@ -13,20 +13,24 @@ Qik <- function(pi_k, mu_k, y_k, thetak) {
     .Call('_ZINB_Qik', PACKAGE = 'ZINB', pi_k, mu_k, y_k, thetak)
 }
 
-l1_theta <- function(z_k, y_k, mu_k, thetak) {
-    .Call('_ZINB_l1_theta', PACKAGE = 'ZINB', z_k, y_k, mu_k, thetak)
-}
-
 score <- function(X, y_k, z_k, mu_k, pi_k, thetak) {
     .Call('_ZINB_score', PACKAGE = 'ZINB', X, y_k, z_k, mu_k, pi_k, thetak)
 }
 
-l2_theta <- function(z_k, y_k, mu_k, thetak) {
-    .Call('_ZINB_l2_theta', PACKAGE = 'ZINB', z_k, y_k, mu_k, thetak)
-}
-
 In <- function(X, y_k, z_k, mu_k, pi_k, gammak, thetak) {
     .Call('_ZINB_In', PACKAGE = 'ZINB', X, y_k, z_k, mu_k, pi_k, gammak, thetak)
+}
+
+M_estimator <- function(thetak, yik, muik, zik, p) {
+    .Call('_ZINB_M_estimator', PACKAGE = 'ZINB', thetak, yik, muik, zik, p)
+}
+
+M_deriv <- function(thetak, yik, muik, zik) {
+    .Call('_ZINB_M_deriv', PACKAGE = 'ZINB', thetak, yik, muik, zik)
+}
+
+theta_update <- function(thetak, numIter, yik, muik, zik, p) {
+    .Call('_ZINB_theta_update', PACKAGE = 'ZINB', thetak, numIter, yik, muik, zik, p)
 }
 
 dznbinom <- function(x, size, prob, infl) {

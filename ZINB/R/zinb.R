@@ -1,3 +1,5 @@
+#' @importFrom Rcpp evalCpp
+#' @import RcppArmadillo
 #' @title Zero-Inflated Negative Binomial Regression
 #' @description Conduct zero-inflated negative binomial regression for data. Estimate paramters and their covariance using EM algorithm.
 #' @param X A \eqn{n} by \eqn{p} design matrix. Each row is a vector of observation with \eqn{p} covariates. Number of observations \eqn{n} must be greater than number of covariates \eqn{p}.
@@ -76,6 +78,7 @@ LRT1D <- function(X, y, add_intercept=TRUE, ...){
   return(result)
 }
 
+#' @importFrom stats p.adjust
 #' @title Likelihood Ratio Test for Zero-Inflated Negative Binomial Regression (Multiple Responses)
 #' @description Testing the intercept model against the model fitted by the design matrix. It is recommended to include the intercept in X or set \code{add_intercept} as TRUE.
 #' @param X An \eqn{n} by \eqn{p} design matrix. Each row is a vector of observation with \eqn{p} covariates. Number of observations \eqn{n} must be greater than number of covariates \eqn{p}.

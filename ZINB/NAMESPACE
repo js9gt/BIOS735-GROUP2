@@ -3,4 +3,7 @@
 export(LRT1D)
 export(LRTnD)
 export(fit.zinb)
+import(RcppArmadillo)
+importFrom(Rcpp,evalCpp)
+importFrom(stats,p.adjust)
 useDynLib(ZINB)
