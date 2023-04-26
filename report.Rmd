@@ -248,7 +248,7 @@ Using the identified OTUs from step 1, we will fit a logistic regression to pred
 
 Finally, we will compare the performance of our model with a Random Forest model from the "caret" package in R. Random forest classification will be implemented to assess the ability of the gut microbiome data to predict ASD status. The implementation of random forest classification improves the disadvantages of just having one classification tree. Any one classification tree tends to not "have the same level of predictive accuracy as some of the other regression and classification approaches" and are susceptible to large changes because of small changes in data [@james2017learning]. Additionally, random forests run efficiently on large datasets and have high performance on classification algorithms. Rather than performing this random forest with the step 1 selected differential abundant OTU species, we will use the entire dataset, as the algorithm will decide for itself which of the OTUs is important as a feature for predicting ASD status.
 
-Tuning parameters that can be adjusted include the number of trees generated, the subset of the number of predictors considered at each split, and the measure used to assess the quality of the split, among others.
+Tuning parameters that can be adjusted include the number of trees generated, the subset of the number of predictors considered at each split, and the measure used to assess the quality of the split, among others. Tuning paramters were selected in the random forest based on the "accuracy" metric.
 
 Before performing the analysis, the data will be split into a training and testing set following an $80/20$ train/test split. The training will be performed on the training data for both the random forest and the logistic regression model. 
 
@@ -361,6 +361,9 @@ We can also look at variable importance scores, which were output from the rando
 Weighted sums of the absolute regression coefficients. The weights are a function of the reduction of the sums of squares across the number of partial least square components and are computed separately for each outcome. Therefore, the contribution of the coefficients are weighted proportionally to the reduction in the sums of squares [@caret].
 
 ![Variable Importance Scores](Figures/varimp.png)
+
+
+The most important predictor, abundance information from OTU 1225 from the Lachnoclostridium genus was also discovered to be important in another study with ASD and TD children in a chinese study, as a decrease in abundance values of Lachnoclostridium was observed in ASD patients [@ma2019altered]. Similarly for the second most important OTU of the genus Prevotella 2, an observational study of gut microbiome in ASD children reported significantly lower abundance of Prevotella bacteria in ASD patient samples [@kang2013reduced]. Thus, our model may have correctly captured other bacterial groups which may be used to aid ASD diagnosis in the future.
 
 ## Limitations
 
